@@ -11,6 +11,8 @@
 #include <pthread.h>
 #include <errno.h>
 
+#include "packet.h"
+
 void rrecv(unsigned short int myUDPport, 
             char* destinationFile, 
             unsigned long long int writeRate) {

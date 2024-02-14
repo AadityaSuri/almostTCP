@@ -1,13 +1,14 @@
 # If you use threads, add -pthread here.
-COMPILERFLAGS = -g -Wall -Wextra -Wno-sign-compare 
+COMPILERFLAGS = -g -Wall -Wextra -Wno-sign-compare -Isrc/include 
 
 # Any libraries you might need linked in.
 LINKLIBS = -lpthread
 
 # The components of each program. When you create a src/foo.c source file, add obj/foo.o here, separated
 #by a space (e.g. SOMEOBJECTS = obj/foo.o obj/bar.o obj/baz.o).
-SERVEROBJECTS = obj/receiver.o
-CLIENTOBJECTS = obj/sender.o
+SERVEROBJECTS = obj/receiver.o obj/packet.o
+CLIENTOBJECTS = obj/sender.o obj/packet.o
+# OTHEROBJECTS = obj/packet.o
 
 #Every rule listed here as .PHONY is "phony": when you say you want that rule satisfied,
 #Make knows not to bother checking whether the file exists, it just runs the recipes regardless.
@@ -25,7 +26,7 @@ all : obj sender receiver
 #$@: name of rule's target: server, client, talker, or listener, for the respective rules.
 #$^: the entire dependency string (after expansions); here, $(SERVEROBJECTS)
 #CC is a built in variable for the default C compiler; it usually defaults to "gcc". (CXX is g++).
-receiver: $(SERVEROBJECTS)
+receiver: $(SERVEROBJECTS) 
 	$(CC) $(COMPILERFLAGS) $^ -o $@ $(LINKLIBS)
 
 
