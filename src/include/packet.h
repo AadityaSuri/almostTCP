@@ -1,17 +1,17 @@
 #include <stdint.h>
 
 
-struct header {
+typedef struct header {
     uint16_t source_port;
     uint16_t dest_port;
     uint32_t sequence;
     uint32_t ack;
     uint32_t flags;
     uint32_t checksum;
-};
+} header_t;
 
-struct packet {
-    struct header header;
+typedef struct packet {
+    header_t header;
     unsigned char* data;
-};
+} packet_t;
 
