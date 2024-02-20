@@ -11,3 +11,17 @@
 #define IS_FIN(flags) flags & FIN_FLAG
 #define IS_SYN_ACK(flags) flags & SYN_ACK_FLAG
 #define HAS_FLAGS(flags) IS_ACK(flags) | IS_SYN(flags) | IS_FIN(flags)
+
+struct packet create_packet(uint16_t source_port, uint16_t dest_port, uint32_t seq_number, uint32_t ack_number, uint32_t flags){
+
+    struct packet created_packet;
+
+    created_packet->source_port = source_port;
+    created_packet->dest_port = dest_port;
+    created_packet->sequence = seq_number;
+    created_packet->ack = ack_number;
+    created_packet->flags = flags;
+    // created_packet->checksum = compute checksum
+    return created_packet;
+
+}

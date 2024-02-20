@@ -19,33 +19,35 @@ void rrecv(unsigned short int myUDPport,
             char* destinationFile, 
             unsigned long long int writeRate) {
 
-    char incoming_buf [MAXSIZE];
+    struct packet incoming_packet;
+    struct packet outgoing_packet;
 
     bool connection_open = false;
     bool checksum = true;
 
-    uint32_t = expected_sequence;
+    uint32_t expected_sequence = 1;
 
     int sock_fd = initializeSocket(myUDPport);
-
     connection_open = handshake(sock_fd);
 
     while(connection_open){
-        size_t recv_len = recvfrom(sock_fd, incoming_buf, sizeof(incoming_buf), MSG_WAITALL);
-        struct packet packet_data = (struct packet) incoming_buf;
+        size_t recv_len = recvfrom(sock_fd, incoming_packet, sizeof(incoming_packet), MSG_WAITALL);
+        //some error handling on if recv_len is correct value?
         //compute checksum here, set value of checksum boolean
         if (checksum){
-            if (HAS_FLAGS(flags)){
+            if (HAS_FLAGS(incoming_packet->flags)){
                 //handle flags
             }
             else {
-                if(packet_data->sequence == expected_sequence){
+                if(incoming_packet->sequence == expected_sequence){
                     //write data
                     //check if any enqueued data can be written
 
                 } else {
                     //enqueue this packet somewhere
                 }
+                //create outgoing packet
+
                 //send ack
 
             }
@@ -58,6 +60,7 @@ void rrecv(unsigned short int myUDPport,
 
     }            
 }
+
 
 bool handshake(int sock_fd){
     //conduct tcp handshake
