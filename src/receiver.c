@@ -13,38 +13,49 @@
 
 #include "packet.h"
 
+#define MAXSIZE sizeof(struct packet)
 
 void rrecv(unsigned short int myUDPport, 
             char* destinationFile, 
             unsigned long long int writeRate) {
 
+    char incoming_buf [MAXSIZE];
+
     bool connection_open = false;
+    bool checksum = true;
+
+    uint32_t = expected_sequence;
+
     int sock_fd = initializeSocket(myUDPport);
 
     connection_open = handshake(sock_fd);
 
     while(connection_open){
-        """
-        CORE LOOP
-        read from socket into incoming buf
-        compute checksum
-        if checksum correct:
-            check flags:
-                if no flags:
-                    check seq#:
-                        if seq# correct:
-                            write data
-                            check if queued data can be written
-                            send ack
-                        else:
-                            hold data in queue
-                            await new data
-                if flags:
-                    start end connection protocol
-                    connection_open = false
-        else:
-            discard data
-        """
+        size_t recv_len = recvfrom(sock_fd, incoming_buf, sizeof(incoming_buf), MSG_WAITALL);
+        struct packet packet_data = (struct packet) incoming_buf;
+        //compute checksum here, set value of checksum boolean
+        if (checksum){
+            if (HAS_FLAGS(flags)){
+                //handle flags
+            }
+            else {
+                if(packet_data->sequence == expected_sequence){
+                    //write data
+                    //check if any enqueued data can be written
+
+                } else {
+                    //enqueue this packet somewhere
+                }
+                //send ack
+
+            }
+        }
+        else {
+            //error handling for invalid checksum 
+            //likely discard
+        }
+
+
     }            
 }
 

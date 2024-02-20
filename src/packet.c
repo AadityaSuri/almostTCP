@@ -10,3 +10,4 @@
 #define IS_SYN(flags) flags & SYN_FLAG
 #define IS_FIN(flags) flags & FIN_FLAG
 #define IS_SYN_ACK(flags) flags & SYN_ACK_FLAG
+#define HAS_FLAGS(flags) IS_ACK(flags) | IS_SYN(flags) | IS_FIN(flags)

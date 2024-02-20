@@ -12,6 +12,5 @@ typedef struct header {
 
 typedef struct packet {
     header_t header;
-    unsigned char* data;
+    unsigned char data [64];
 } packet_t;
-
