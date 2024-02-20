@@ -17,6 +17,13 @@ void rrecv(unsigned short int myUDPport,
             char* destinationFile, 
             unsigned long long int writeRate) {
 
+
+            server_sock = socket(
+                AF_INET,
+                SOCK_DGRAM,
+                0
+            )
+
 }
 
 int main(int argc, char** argv) {
