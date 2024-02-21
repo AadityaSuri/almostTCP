@@ -17,24 +17,21 @@
 #define IS_SYN_ACK(flags) flags & SYN_ACK_FLAG
 #define HAS_FLAGS(flags) IS_ACK(flags) | IS_SYN(flags) | IS_FIN(flags)
 
-header_t* create_header(uint16_t source_port, uint16_t dest_port, uint32_t seq_number, uint32_t ack_number, uint32_t flags){
+header_t create_header(uint16_t source_port, uint16_t dest_port, uint32_t seq_number, uint32_t ack_number, uint32_t flags){
 
-    // packet_t* created_packet = (packet_t*)malloc(sizeof(packet_t));
-    header_t* created_header = (header_t*)malloc(sizeof(header_t));
-    // created_packet->header = created_header;
+    header_t created_header;
     
-    created_header->source_port = source_port;
-    created_header->dest_port = dest_port;
-    created_header->sequence = seq_number;
-    created_header->ack = ack_number;
-    created_header->flags = flags;
-    // created_header->checksum = compute_checksum(created_packet);
+    created_header.source_port = source_port;
+    created_header.dest_port = dest_port;
+    created_header.sequence = seq_number;
+    created_header.ack = ack_number;
+    created_header.flags = flags;
     return created_header;
 
 }
 
-packet_t* create_packet(unsigned char data[], header_t* pkt_header) {
-  packet_t* created_packet = (packet_t*)malloc(sizeof(packet_t));
+packet_t create_packet(unsigned char data[], header_t pkt_header) {
+  packet_t created_packet; 
   created_packet->header = pkt_header;
 
   for (size_t i = 0; i < sizeof(created_packet->data); i++) {
@@ -43,18 +40,3 @@ packet_t* create_packet(unsigned char data[], header_t* pkt_header) {
 
   return created_packet;
 }
-
-void destroy_packet(packet_t* packet) {
-  free(packet->header);
-  free(packet);
-}
-
-// uint32_t compute_checksum(packet_t* packet) {
-//   uint32_t checksum = 0; 
-//     // (uint32_t)packet->header->source_port + 
-//     // (uint32_t)packet->header->dest_port +
-//     // packet->header->sequence +
-//     // packet->header->ack + 
-//     // packet->header->flags;
-//   return checksum;
-// }

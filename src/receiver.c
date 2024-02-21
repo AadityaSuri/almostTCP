@@ -22,6 +22,8 @@ void rrecv( unsigned short int myUDPport,
             unsigned long long int writeRate) {
 
     packet_t incoming_packet;
+
+    char incoming_buf [MAXSIZE];
     packet_t* outgoing_packet;
     header_t* outgoing_header
     size_t recv_len, send_len;
@@ -41,9 +43,9 @@ void rrecv( unsigned short int myUDPport,
         IPPROTO_UDP
     );
 
-    //error checking for sock_fd
+    //TODO: error checking for sock_fd
     int bind_code = bind(sock_fd, (const struct sockaddr*) &server_addr, sizeof(server_addr));
-    //error checking for bind
+    //TODO: error checking for bind
 
 
     bool connection_open = true; //us this always true?
@@ -51,25 +53,25 @@ void rrecv( unsigned short int myUDPport,
     uint32_t ack_number
    
     while(connection_open){
-        recv_len = recvfrom(sock_fd, incoming_packet, sizeof(incoming_packet), MSG_WAITALL, (sock_addr*) &client_addr, sizeof(client_addr));
+        recv_len = recvfrom(sock_fd, &incoming_packet, sizeof(incoming_packet), MSG_WAITALL, (sock_addr*) &client_addr, sizeof(client_addr));
 
         if (HAS_FLAGS(incoming_packet->flags)){
-            //handle flags
+            //TODO: handle flags
         }
         else {
             if(incoming_packet->sequence == expected_sequence){
                 ack_number = expected_sequence;
                 expected_sequence+=1;
-                //write data
-                //check if any enqueued data can be written
+                //TODO: write data
+                //TODO: check if any enqueued data can be written
 
             } else {
                 ack_number = incoming_packet->sequence;
-                //enqueue this packet somewhere
+                //TODO: enqueue this packet somewhere
             }
             outgoing_header = create_header();
             outgoing_packet = create_packet(outgoing_header, NULL);
-            //make outgoing_packet an ack type
+            //TODO: make outgoing_packet an ack type
             send_len = sendto(sock_fd, outgoing_packet, sizeof(*outgoing_packet), (sock_addr*) &server_addr, sizeof(server_addr) )
         }
     }
