@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <inttypes.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -42,12 +43,36 @@ void rsend(char* hostname,
     exit(EXIT_FAILURE);
   }
 
+  
+  uint32_t seq_num = 0;
   unsigned long long int totalSent = 0;
   size_t bytesRead;
 
   while(totalSent < bytesToTransfer) {
+    unsigned char buffer[64];
+    fread(buffer, sizeof(unsigned char), 64, file);
 
+    header_t header = create_header(++seq_num, 0, 64, 0);
+    packet_t packet = create_packet(buffer, header);
+
+    sendto(sockfd, &packet, sizeof(packet), 0,
+    (const struct sockaddr*) &server_addr,  sizeof(server_addr));
+    // header_t header = create_header(++seq_num, 0, );
+    totalSent += packet.header.length;
   }
+
+  // header_t header = create_header(0, 1, 2, 3, 4);
+  // unsigned char mssg[64] = "hello from sender\n";
+  // packet_t pkt = create_packet(mssg, header);
+
+
+  // while (true) {
+  //   sendto(sockfd, &pkt, sizeof(pkt),
+	// 	0, (const struct sockaddr *) &server_addr,
+	// 		sizeof(server_addr));
+	//   printf("Hello message sent.\n");
+  // }
+  
 
 }
 
@@ -74,6 +99,9 @@ int main(int argc, char** argv) {
     hostUDPport = (unsigned short int) atoi(argv[2]);
     hostname = argv[1];
     bytesToTransfer = atoll(argv[4]);
+
+    // rsend("localhost", 8080, "testfile.txt", 100);
+    rsend(hostname, hostUDPport, "testfile.txt", bytesToTransfer);
 
     return (EXIT_SUCCESS);
 }
