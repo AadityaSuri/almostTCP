@@ -1,6 +1,8 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
@@ -11,11 +13,42 @@
 #include <pthread.h>
 #include <errno.h>
 
+#include "packet.h"
+
+#define PORT 8080
+
 void rsend(char* hostname, 
             unsigned short int hostUDPport, 
             char* filename, 
             unsigned long long int bytesToTransfer) 
 {
+  int sockfd;
+  struct sockaddr_in server_addr;
+  FILE *file;
+
+  if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    perror("socket creation failed");
+    exit(EXIT_FAILURE);
+  }
+
+  memset(&server_addr, 0, sizeof(server_addr));
+
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_port = htons(PORT);
+  server_addr.sin_addr.s_addr = INADDR_ANY;
+
+
+  if ((file = fopen(filename, "r")) == NULL) {
+    perror("Failed to open file");
+    exit(EXIT_FAILURE);
+  }
+
+  unsigned long long int totalSent = 0;
+  size_t bytesRead;
+
+  while(totalSent < bytesToTransfer) {
+
+  }
 
 }
 
@@ -24,6 +57,13 @@ int main(int argc, char** argv) {
     // You should implement this function more completely
     // so that one can invoke the file transfer from the
     // command line.
+
+    // packet_t* pkt = create_packet(0, 1, 2, 3, 4);
+
+    // uint32_t checksum = compute_checksum(pkt);
+    //
+    // printf("%" PRIu32, checksum);   
+    
     int hostUDPport;
     unsigned long long int bytesToTransfer;
     char* hostname = NULL;
