@@ -26,7 +26,12 @@ packet_t* create_packet(uint16_t source_port, uint16_t dest_port, uint32_t seq_n
     created_packet->header.sequence = seq_number;
     created_packet->header.ack = ack_number;
     created_packet->header.flags = flags;
-    // created_packet->checksum = compute checksum
+    created_packet->header.checksum = compute_checksum(created_packet);
     return created_packet;
 
+}
+
+uint32_t compute_checksum(packet_t* packet) {
+  uint32_t checksum;
+  return checksum;
 }
