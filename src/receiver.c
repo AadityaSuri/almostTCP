@@ -61,15 +61,21 @@ void rrecv( unsigned short int myUDPport,
     while(connection_open){
         recv_len = recvfrom(sock_fd, &incoming_packet, sizeof(incoming_packet), 0, (const struct sock_addr*) &client_addr, sizeof(client_addr));
         //TODO: error checking for recv_len
-        if (HAS_FLAGS(incoming_packet.header.flags)){
+        if (IS_FIN(incoming_packet.header.flags)){
             //handle flags
+            printf("RECEIVED FLAG\n");
             connection_open = false;
+            break;
+
         }
         else {
             if(incoming_packet.header.seq_num == expected_sequence){
                 ack_number = expected_sequence;
                 expected_sequence+=1;
-                fprintf(outfile, "%s", incoming_packet.data);
+                for (int i = 0; i < 64; i++){
+                    fprintf(outfile, "%c", incoming_packet.data[i]);
+                }
+                
                 //TODO: check if any enqueued data can be written
 
             } else {
@@ -80,8 +86,10 @@ void rrecv( unsigned short int myUDPport,
             outgoing_packet = create_packet(NULL, outgoing_header);
             send_len = sendto(sock_fd, &outgoing_packet, sizeof(outgoing_packet), 0, (const struct sock_addr*) &server_addr, sizeof(server_addr));
         }
-        fclose(outfile);
+        
     }
+    fclose(outfile);
+    return(EXIT_SUCCESS);
 }            
 
 

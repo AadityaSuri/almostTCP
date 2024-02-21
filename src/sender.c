@@ -47,19 +47,28 @@ void rsend(char* hostname,
   uint32_t seq_num = 0;
   unsigned long long int totalSent = 0;
   size_t bytesRead;
+  header_t header;
+  packet_t packet;
+  unsigned char buffer[64];
 
-  while(totalSent < bytesToTransfer) {
-    unsigned char buffer[64];
-    fread(buffer, sizeof(unsigned char), 64, file);
+  //this while loop will seg fault if bytesToTransfer is > actual file size
+  while(totalSent < bytesToTransfer)   { 
+    memset(buffer, 0, 64);
+    size_t bytesRead = fread(buffer, 1, 64, file);
 
-    header_t header = create_header(++seq_num, 0, 64, 0);
+    header_t header = create_header(seq_num++, 0, 64, 0);
     packet_t packet = create_packet(buffer, header);
 
     sendto(sockfd, &packet, sizeof(packet), 0,
     (const struct sockaddr*) &server_addr,  sizeof(server_addr));
-    // header_t header = create_header(++seq_num, 0, );
     totalSent += packet.header.length;
   }
+  header = create_header(0,0,0, FIN_FLAG);
+  packet = create_packet(NULL, header);
+  sendto(sockfd, &packet, sizeof(packet), 0,
+    (const struct sockaddr*) &server_addr,  sizeof(server_addr));
+  printf("SENT FIN\n");
+
 
   // header_t header = create_header(0, 1, 2, 3, 4);
   // unsigned char mssg[64] = "hello from sender\n";
@@ -101,7 +110,7 @@ int main(int argc, char** argv) {
     bytesToTransfer = atoll(argv[4]);
 
     // rsend("localhost", 8080, "testfile.txt", 100);
-    rsend(hostname, hostUDPport, "testfile.txt", bytesToTransfer);
+    rsend(hostname, hostUDPport, "potter.txt", bytesToTransfer);
 
     return (EXIT_SUCCESS);
 }
