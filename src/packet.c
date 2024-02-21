@@ -39,11 +39,11 @@ void destroy_packet(packet_t* packet) {
 }
 
 uint32_t compute_checksum(packet_t* packet) {
-  uint32_t checksum = 0 + 
-    (uint32_t)packet->header->source_port + 
-    (uint32_t)packet->header->dest_port +
-    packet->header->sequence +
-    packet->header->ack + 
-    packet->header->flags;
+  uint32_t checksum = 0; 
+    // (uint32_t)packet->header->source_port + 
+    // (uint32_t)packet->header->dest_port +
+    // packet->header->sequence +
+    // packet->header->ack + 
+    // packet->header->flags;
   return checksum;
 }

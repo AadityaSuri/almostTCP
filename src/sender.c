@@ -15,11 +15,40 @@
 
 #include "packet.h"
 
+#define PORT 8080
+
 void rsend(char* hostname, 
             unsigned short int hostUDPport, 
             char* filename, 
             unsigned long long int bytesToTransfer) 
 {
+  int sockfd;
+  struct sockaddr_in server_addr;
+  FILE *file;
+
+  if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    perror("socket creation failed");
+    exit(EXIT_FAILURE);
+  }
+
+  memset(&server_addr, 0, sizeof(server_addr));
+
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_port = htons(PORT);
+  server_addr.sin_addr.s_addr = INADDR_ANY;
+
+
+  if ((file = fopen(filename, "r")) == NULL) {
+    perror("Failed to open file");
+    exit(EXIT_FAILURE);
+  }
+
+  unsigned long long int totalSent = 0;
+  size_t bytesRead;
+
+  while(totalSent < bytesToTransfer) {
+
+  }
 
 }
 
@@ -29,23 +58,23 @@ int main(int argc, char** argv) {
     // so that one can invoke the file transfer from the
     // command line.
 
-    packet_t* pkt = create_packet(0, 1, 2, 3, 4);
+    // packet_t* pkt = create_packet(0, 1, 2, 3, 4);
 
     // uint32_t checksum = compute_checksum(pkt);
     //
     // printf("%" PRIu32, checksum);   
     
-    // int hostUDPport;
-    // unsigned long long int bytesToTransfer;
-    // char* hostname = NULL;
-    //
-    // if (argc != 5) {
-    //     fprintf(stderr, "usage: %s receiver_hostname receiver_port filename_to_xfer bytes_to_xfer\n\n", argv[0]);
-    //     exit(1);
-    // }
-    // hostUDPport = (unsigned short int) atoi(argv[2]);
-    // hostname = argv[1];
-    // bytesToTransfer = atoll(argv[4]);
+    int hostUDPport;
+    unsigned long long int bytesToTransfer;
+    char* hostname = NULL;
+
+    if (argc != 5) {
+        fprintf(stderr, "usage: %s receiver_hostname receiver_port filename_to_xfer bytes_to_xfer\n\n", argv[0]);
+        exit(1);
+    }
+    hostUDPport = (unsigned short int) atoi(argv[2]);
+    hostname = argv[1];
+    bytesToTransfer = atoll(argv[4]);
 
     return (EXIT_SUCCESS);
 }
