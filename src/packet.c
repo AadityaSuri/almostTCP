@@ -1,3 +1,8 @@
+#include <stdint.h>
+#include <stdlib.h>
+
+#include "packet.h"
+
 #define URG_FLAG 0000000000_100000_0000000000000000
 #define ACK_FLAG 0000000000_010000_0000000000000000
 #define PSH_FLAG 0000000000_001000_0000000000000000
@@ -12,15 +17,15 @@
 #define IS_SYN_ACK(flags) flags & SYN_ACK_FLAG
 #define HAS_FLAGS(flags) IS_ACK(flags) | IS_SYN(flags) | IS_FIN(flags)
 
-struct packet create_packet(uint16_t source_port, uint16_t dest_port, uint32_t seq_number, uint32_t ack_number, uint32_t flags){
+packet_t* create_packet(uint16_t source_port, uint16_t dest_port, uint32_t seq_number, uint32_t ack_number, uint32_t flags){
 
-    struct packet created_packet;
-
-    created_packet->source_port = source_port;
-    created_packet->dest_port = dest_port;
-    created_packet->sequence = seq_number;
-    created_packet->ack = ack_number;
-    created_packet->flags = flags;
+    packet_t* created_packet = (packet_t*)malloc(sizeof(packet_t));
+    
+    created_packet->header.source_port = source_port;
+    created_packet->header.dest_port = dest_port;
+    created_packet->header.sequence = seq_number;
+    created_packet->header.ack = ack_number;
+    created_packet->header.flags = flags;
     // created_packet->checksum = compute checksum
     return created_packet;
 

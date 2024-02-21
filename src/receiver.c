@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
@@ -19,8 +21,8 @@ void rrecv(unsigned short int myUDPport,
             char* destinationFile, 
             unsigned long long int writeRate) {
 
-    struct packet incoming_packet;
-    struct packet outgoing_packet;
+    packet_t incoming_packet;
+    packet_t outgoing_packet;
 
     bool connection_open = false;
     bool checksum = true;
