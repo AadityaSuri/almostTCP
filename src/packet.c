@@ -20,18 +20,30 @@
 packet_t* create_packet(uint16_t source_port, uint16_t dest_port, uint32_t seq_number, uint32_t ack_number, uint32_t flags){
 
     packet_t* created_packet = (packet_t*)malloc(sizeof(packet_t));
+    header_t* created_header = (header_t*)malloc(sizeof(header_t));
+    created_packet->header = created_header;
     
-    created_packet->header.source_port = source_port;
-    created_packet->header.dest_port = dest_port;
-    created_packet->header.sequence = seq_number;
-    created_packet->header.ack = ack_number;
-    created_packet->header.flags = flags;
-    created_packet->header.checksum = compute_checksum(created_packet);
+    created_header->source_port = source_port;
+    created_header->dest_port = dest_port;
+    created_header->sequence = seq_number;
+    created_header->ack = ack_number;
+    created_header->flags = flags;
+    created_header->checksum = compute_checksum(created_packet);
     return created_packet;
 
 }
 
+void destroy_packet(packet_t* packet) {
+  free(packet->header);
+  free(packet);
+}
+
 uint32_t compute_checksum(packet_t* packet) {
-  uint32_t checksum;
+  uint32_t checksum = 0 + 
+    (uint32_t)packet->header->source_port + 
+    (uint32_t)packet->header->dest_port +
+    packet->header->sequence +
+    packet->header->ack + 
+    packet->header->flags;
   return checksum;
 }
