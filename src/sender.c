@@ -110,7 +110,7 @@ int main(int argc, char** argv) {
     bytesToTransfer = atoll(argv[4]);
 
     // rsend("localhost", 8080, "testfile.txt", 100);
-    rsend(hostname, hostUDPport, "potter.txt", bytesToTransfer);
+    rsend(hostname, hostUDPport, argv[3], bytesToTransfer);
 
     return (EXIT_SUCCESS);
 }
