@@ -9,12 +9,19 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <pthread.h>
 #include <errno.h>
 
 #include "packet.h"
+
+#define ACK_TIMEOUT 1000
+#define MAX_RETRIES 5
+
+#define max(a, b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((b) > (a) ? (a) : (b))
 
 
 void rsend(char* hostname, 
@@ -51,16 +58,39 @@ void rsend(char* hostname,
   packet_t packet;
   unsigned char buffer[64];
 
+  unsigned long long int fileTotalBytes = 0;
+  struct stat fileStat;
+  if (stat(filename, &fileStat) == -1) {
+    perror("stat");
+    exit(EXIT_FAILURE);
+  }
+  fileTotalBytes = fileStat.st_size;
+
   //this while loop will seg fault if bytesToTransfer is > actual file size
-  while(totalSent < bytesToTransfer)   { 
+  while(totalSent < min(fileTotalBytes, bytesToTransfer))   {
     memset(buffer, 0, 64);
     size_t bytesRead = fread(buffer, 1, 64, file);
 
-    header_t header = create_header(seq_num++, 0, 64, 0);
+    header_t header = create_header(seq_num++, 0, bytesRead, 0);
     packet_t packet = create_packet(buffer, header);
 
-    sendto(sockfd, &packet, sizeof(packet), 0,
-    (const struct sockaddr*) &server_addr,  sizeof(server_addr));
+    // int retries = 0;
+    // while (retries < MAX_RETRIES) {
+    //   if (sendto(sockfd, &packet, sizeof(header) + bytesRead, 0,
+    //     (const struct sockaddr*) &server_addr,  sizeof(server_addr)) < 0) {
+    //     }
+    //   }
+
+    packet_t ack_packet = create_packet(NULL, header);
+    sendto(sockfd, &ack_packet, sizeof(ack_packet), 
+        0, (const struct sockaddr*) &server_addr,  sizeof(server_addr));
+
+
+    if (recvfrom(sockfd, &ack_packet, sizeof(ack_packet), 
+        0, (const struct sockaddr*) &server_addr, sizeof(server_addr)) < 0) {
+          
+
+
     totalSent += packet.header.length;
   }
   header = create_header(0,0,0, FIN_FLAG);
