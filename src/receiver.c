@@ -26,7 +26,7 @@ void rrecv( unsigned short int myUDPport,
     header_t outgoing_header;
     PriorityQueue packet_queue;
     
-    size_t recv_len, send_len;
+    int recv_len, send_len;
     struct sockaddr_in server_addr, client_addr;
 
     int sock_fd = socket(
@@ -76,14 +76,17 @@ void rrecv( unsigned short int myUDPport,
             } else if (incoming_packet.header.seq_num > expected_sequence) {
                 ack_number = incoming_packet.header.seq_num;
                 //TODO: enqueue this packet somewhere
+                enqueue(&packet_queue, incoming_packet.header.seq_num, incoming_packet.data);
             } else {
                 ack_number = expected_sequence;
                 expected_sequence+=1;
-                for (int i = 0; i < 64; i++){
-                    fprintf(outfile, "%c", incoming_packet.data[i]);
-                }  
+                // for (int i = 0; i < 64; i++){
+                //     fprintf(outfile, "%c", incoming_packet.data[i]);
+                // }  
+                //TODO: write data to output
+
             }
-            // TODO: check if enqueued data can be written
+            // TODO: check if ANY enqueued data can be written
 
 
             outgoing_header = create_header(expected_sequence, ack_number, 0, ACK_FLAG);

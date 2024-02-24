@@ -2,7 +2,7 @@
 
 typedef struct {
     int priority;
-    packet_t packet;    
+    char data [64];    
 } QueueNode;
 
 typedef struct {
@@ -16,7 +16,7 @@ void swapQueueNodes(QueueNode* a, QueueNode* b);
 
 void heapify(PriorityQueue* priority_queue, int root);
 
-int enqueue(PriorityQueue* priority_queue, int priority, packet_t packet);
+int enqueue(PriorityQueue* priority_queue, int priority, char* data);
 
 QueueNode dequeue(PriorityQueue* priority_queue);
 
