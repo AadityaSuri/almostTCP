@@ -16,15 +16,15 @@
 #include "packet.h"
 #include "priorityqueue.h"
 
-size_t writeWithRate(char* data, unsigned long long int write_rate, size_t total_bytes_written, time_t start_time, FILE* outfile) {
-    size_t data_length = sizeof(*data);
+size_t writeWithRate(char data[], unsigned long long int write_rate, size_t total_bytes_written, time_t start_time, FILE* outfile) {
+    size_t data_length = sizeof(data);
     size_t bytes_written = 0;
 
     if (write_rate == 0) {
         for (size_t i = 0; i < data_length; i++){
             bytes_written += fputc(data[i], outfile);
+            // printf("%c", data[i]);
         }
-        fflush(outfile);
         //TODO: handle error if bytes written is not correct value
         return bytes_written;
     }
@@ -41,7 +41,6 @@ size_t writeWithRate(char* data, unsigned long long int write_rate, size_t total
     for (size_t i = 0; i < data_length; i++){
             bytes_written += fputc(data[i], outfile);
         }
-    fflush(outfile);
     //TODO: handle error if bytes written is not correct value
     return bytes_written;
 }
@@ -92,11 +91,11 @@ void rrecv( unsigned short int udp_port,
     while(connection_open){
         recv_len = recvfrom(sock_fd, &incoming_packet, sizeof(incoming_packet), 0, (const struct sock_addr*) &client_addr, sizeof(client_addr));
         
-        if (recv_len < 0) {
-            fprintf(stderr, "Socket receive failed: %d\n", recv_len);
-            close(sock_fd);
-            exit(EXIT_FAILURE);
-        }
+        // if (recv_len < 0) {
+        //     fprintf(stderr, "Socket receive failed: %d\n", recv_len);
+        //     close(sock_fd);
+        //     exit(EXIT_FAILURE);
+        // }
 
         if (IS_FIN(incoming_packet.header.flags)){
             //handle flags, send FIN ACK?
@@ -107,12 +106,17 @@ void rrecv( unsigned short int udp_port,
         else {
             if(incoming_packet.header.seq_num < expected_sequence){
                 //TODO: discard packet
+                printf("%d, %d", incoming_packet.header.seq_num);
+                printf("DISCARDING PACKET");
+                memset(&incoming_packet, 0, sizeof(incoming_packet));
             } else if (incoming_packet.header.seq_num > expected_sequence) {
                 ack_number = incoming_packet.header.seq_num;
                 //enqueue packet with priority seq_num to be written later
+                printf("ENQUEUING PACKET");
                 enqueue(packet_queue, incoming_packet.header.seq_num, incoming_packet.data);
             } else {
-                //write packet 
+                //write packet
+                // for (int i = 0; i < sizeof(incoming_packet.data); i++){printf("%c", incoming_packet.data[i]);} 
                 total_bytes_written =+ writeWithRate(incoming_packet.data, write_rate, total_bytes_written, start_time, outfile);
                 ack_number = expected_sequence;
                 expected_sequence+=1;
