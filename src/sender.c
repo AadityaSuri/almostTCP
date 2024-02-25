@@ -19,9 +19,15 @@
 
 #define ACK_TIMEOUT 1000
 #define MAX_RETRIES 5
+#define MAX_CONSECUTIVE_PACKETS 10
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((b) > (a) ? (a) : (b))
+
+struct packet_retry {
+    packet_t packet;
+    int retries;
+};
 
 
 void rsend(char* hostname, 
@@ -56,7 +62,7 @@ void rsend(char* hostname,
   size_t bytesRead;
   header_t header;
   packet_t packet;
-  unsigned char buffer[64];
+  // unsigned char buffer[64];
 
   unsigned long long int fileTotalBytes = 0;
   struct stat fileStat;
@@ -68,11 +74,42 @@ void rsend(char* hostname,
 
   //this while loop will seg fault if bytesToTransfer is > actual file size
   while(totalSent < min(fileTotalBytes, bytesToTransfer))   {
-    memset(buffer, 0, 64);
-    size_t bytesRead = fread(buffer, 1, 64, file);
 
-    header_t header = create_header(seq_num++, 0, bytesRead, 0);
-    packet_t packet = create_packet(buffer, header);
+
+    // read 10 consecutive packets from file and send them
+
+    for (size_t i = 0; i < 10; i++) {
+        unsigned char buffer[64];
+        memset(buffer, 0, 64);
+        size_t bytesRead = fread(buffer, 1, 64, file);
+
+        // header_t header = create_header(seq_num++, 0, bytesRead, 0);
+        packet_t packet = create_packet(buffer, 
+            create_header(seq_num++, 0, bytesRead, 0));
+
+        struct packet_retry packet_retry = (struct packet_retry) {
+            .packet = packet,
+            .retries = 0
+        };
+
+        sendto(sockfd, &packet_retry, sizeof(packet.header) + bytesRead, 
+            0, (const struct sockaddr*) &server_addr,  sizeof(server_addr));
+
+        packet_t ack_packet;
+        recvfrom(sockfd, &ack_packet, sizeof(ack_packet), 
+            0, (const struct sockaddr*) &server_addr, sizeof(server_addr));
+
+    }
+
+    /*
+    wait for ack from all 10 packets
+    */
+
+    // for (size_t i = 0; i < 10; i++) {
+    //     packet_t ack_packet;
+    //     recvfrom(sockfd, &ack_packet, sizeof(ack_packet), 
+    //         0, (const struct sockaddr*) &server_addr, sizeof(server_addr));
+    // }
 
     // int retries = 0;
     // while (retries < MAX_RETRIES) {
