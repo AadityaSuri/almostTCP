@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <time.h>
 
 #include <pthread.h>
 #include <errno.h>
@@ -16,30 +17,34 @@
 #include "packet.h"
 #include "priorityqueue.h"
 
-size_t writeWithRate(char data[], unsigned long long int write_rate, size_t total_bytes_written, time_t start_time, FILE* outfile) {
-    size_t data_length = sizeof(data);
+size_t writeWithRate(char data[], int data_len, unsigned long long int write_rate, size_t total_bytes_written, time_t start_time, FILE* outfile) {
     size_t bytes_written = 0;
+    time_t current_time;
+    time(&current_time);
 
     if (write_rate == 0) {
-        for (size_t i = 0; i < data_length; i++){
-            bytes_written += fputc(data[i], outfile);
+        for (size_t i = 0; i < data_len; i++){
+            // printf("%c", data[i]);
+            bytes_written += fprintf(outfile, "%c", data[i]);
             // printf("%c", data[i]);
         }
         //TODO: handle error if bytes written is not correct value
         return bytes_written;
     }
 
-    double elapsed_deconds = difftime(time(NULL), start_time);
-    double write_rate_if_all_written = (total_bytes_written + data_length) / elapsed_deconds;
+    double elapsed_seconds = difftime(current_time, start_time);
+    double write_rate_if_all_written = ((double) total_bytes_written + (double)data_len) / elapsed_seconds;
 
-    while (write_rate_if_all_written > write_rate) { 
+
+    while (write_rate_if_all_written > (double) write_rate) { 
         sleep(0.25);
-        elapsed_deconds = difftime(time(NULL), start_time);
-        write_rate_if_all_written = (total_bytes_written + data_length) / elapsed_deconds;
+        time(&current_time);
+        elapsed_seconds = difftime(current_time, start_time);
+        write_rate_if_all_written = ((double) total_bytes_written + (double)data_len) / elapsed_seconds;
     }
 
-    for (size_t i = 0; i < data_length; i++){
-            bytes_written += fputc(data[i], outfile);
+    for (size_t i = 0; i < data_len; i++){
+            bytes_written += fprintf(outfile, "%c", data[i]);
         }
     //TODO: handle error if bytes written is not correct value
     return bytes_written;
@@ -50,7 +55,8 @@ void rrecv( unsigned short int udp_port,
             char* destination_file, 
             unsigned long long int write_rate) {
 
-    time_t start_time = time(NULL);
+    time_t start_time;
+    time(&start_time);
 
     FILE *outfile = fopen(destination_file, "a");
 
@@ -97,6 +103,8 @@ void rrecv( unsigned short int udp_port,
         //     exit(EXIT_FAILURE);
         // }
 
+        // printf("INCOMING SEQUENCE:%d\n", incoming_packet.header.seq_num);
+
         if (IS_FIN(incoming_packet.header.flags)){
             //handle flags, send FIN ACK?
             connection_open = false;
@@ -106,26 +114,28 @@ void rrecv( unsigned short int udp_port,
         else {
             if(incoming_packet.header.seq_num < expected_sequence){
                 //TODO: discard packet
-                printf("%d, %d", incoming_packet.header.seq_num);
-                printf("DISCARDING PACKET");
+                printf("DISCARDING  packet with seq_num: %d\n", incoming_packet.header.seq_num);
                 memset(&incoming_packet, 0, sizeof(incoming_packet));
             } else if (incoming_packet.header.seq_num > expected_sequence) {
                 ack_number = incoming_packet.header.seq_num;
                 //enqueue packet with priority seq_num to be written later
-                printf("ENQUEUING PACKET");
+                printf("ENQUEUING  packet with seq_num: %d\n", incoming_packet.header.seq_num);
                 enqueue(packet_queue, incoming_packet.header.seq_num, incoming_packet.data);
             } else {
                 //write packet
-                // for (int i = 0; i < sizeof(incoming_packet.data); i++){printf("%c", incoming_packet.data[i]);} 
-                total_bytes_written =+ writeWithRate(incoming_packet.data, write_rate, total_bytes_written, start_time, outfile);
+                printf("WRITING packet with seq_num: %d\n", incoming_packet.header.seq_num);
+                total_bytes_written += writeWithRate(incoming_packet.data, sizeof(incoming_packet.data), write_rate, total_bytes_written, start_time, outfile);
+                //TODO: handle errors with return value of writeWithRate
                 ack_number = expected_sequence;
                 expected_sequence+=1;
 
             }
             //check if ANY enqueued data can be written and write it
             while(peak(packet_queue) == expected_sequence) {
+                printf("PEAKING AT QUEUE\n");
                 QueueNode dequeued_node = dequeue(packet_queue);
-                total_bytes_written =+ writeWithRate(dequeued_node.data, write_rate, total_bytes_written, start_time, outfile);
+                printf("WRITING QUEUED  packet with seq_num: %d\n", dequeued_node.priority);
+                total_bytes_written += writeWithRate(dequeued_node.data, sizeof(dequeued_node.data), write_rate, total_bytes_written, start_time, outfile);
                 //TODO: handle errors with return value of writeWithRate
             }
 
@@ -137,6 +147,7 @@ void rrecv( unsigned short int udp_port,
         
     }
     fclose(outfile);
+    printf("DIFFERENCE BETWEEN START AND END TIME: %f", difftime(time(NULL), start_time));
     exit(EXIT_SUCCESS);
 }            
 
