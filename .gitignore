@@ -4,5 +4,6 @@ compile_commands.json
 sender
 receiver
 obj/*
-bpoints
+bpoints*
 *.txt
+.idea/

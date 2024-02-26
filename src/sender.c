@@ -72,6 +72,8 @@ void rsend(char* hostname,
   }
   fileTotalBytes = fileStat.st_size;
 
+  int len = sizeof(server_addr);
+
   //this while loop will seg fault if bytesToTransfer is > actual file size
   while(totalSent < min(fileTotalBytes, bytesToTransfer))   {
 
@@ -92,12 +94,12 @@ void rsend(char* hostname,
             .retries = 0
         };
 
-        sendto(sockfd, &packet_retry, sizeof(packet.header) + bytesRead, 
-            0, (const struct sockaddr*) &server_addr,  sizeof(server_addr));
+        int send_len = sendto(sockfd, &packet, sizeof(packet.header) + bytesRead,
+            0, (const struct sockaddr*) &server_addr,  len);
 
-        packet_t ack_packet;
-        recvfrom(sockfd, &ack_packet, sizeof(ack_packet), 
-            0, (const struct sockaddr*) &server_addr, sizeof(server_addr));
+        // packet_t ack_packet;
+        // recvfrom(sockfd, &ack_packet, sizeof(ack_packet), 
+        //     0, (const struct sockaddr*) &server_addr, sizeof(server_addr));
 
     }
 
@@ -105,11 +107,11 @@ void rsend(char* hostname,
     wait for ack from all 10 packets
     */
 
-    // for (size_t i = 0; i < 10; i++) {
-    //     packet_t ack_packet;
-    //     recvfrom(sockfd, &ack_packet, sizeof(ack_packet), 
-    //         0, (const struct sockaddr*) &server_addr, sizeof(server_addr));
-    // }
+    while (true) {
+        packet_t ack_packet;
+        recvfrom(sockfd, &ack_packet, sizeof(ack_packet), 
+            0, (const struct sockaddr*) &server_addr, &len);
+    }
 
     // int retries = 0;
     // while (retries < MAX_RETRIES) {
@@ -118,14 +120,14 @@ void rsend(char* hostname,
     //     }
     //   }
 
-    packet_t ack_packet = create_packet(NULL, header);
-    sendto(sockfd, &ack_packet, sizeof(ack_packet), 
-        0, (const struct sockaddr*) &server_addr,  sizeof(server_addr));
+    // packet_t ack_packet = create_packet(NULL, header);
+    // sendto(sockfd, &ack_packet, sizeof(ack_packet), 
+    //     0, (const struct sockaddr*) &server_addr,  sizeof(server_addr));
 
 
-    if (recvfrom(sockfd, &ack_packet, sizeof(ack_packet), 
-        0, (const struct sockaddr*) &server_addr, sizeof(server_addr)) < 0) {
-    }      
+    // if (recvfrom(sockfd, &ack_packet, sizeof(ack_packet), 
+    //     0, (const struct sockaddr*) &server_addr, sizeof(server_addr)) < 0) {
+    // }      
 
 
     totalSent += packet.header.length;
