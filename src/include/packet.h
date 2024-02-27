@@ -1,11 +1,7 @@
-<<<<<<< HEAD
 /**
  * @file packet.h
  * @brief Definitions and functions related to packet headers and creation.
  */
-=======
-#pragma once
->>>>>>> 12c648bee3a59799418dfcd525cc37e536fcf38b
 
 #include <stdint.h>
 
@@ -41,9 +37,6 @@ typedef struct header {
     
 } header_t;
 
-
-cpp
-Copy code
 /**
  * @file packet.h
  * @brief Definitions and functions related to packet headers and creation.
