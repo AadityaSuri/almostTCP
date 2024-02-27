@@ -18,7 +18,6 @@
 #include <errno.h>
 
 #include "packet.h"
-#include "dynamic_list.h"
 
 #define ACK_TIMEOUT 1000
 #define MAX_RETRIES 5
@@ -114,7 +113,7 @@ void rsend(char* hostname,
       int send_len = sendto(sockfd, &packet, sizeof(packet.header) + bytesRead,
             0, (const struct sockaddr*) &server_addr,  len);
       // } else {
-        // printf("PACKET with seq_num: %d NOT sent\n", packet.header.seq_num);
+      //   printf("PACKET with seq_num: %d NOT sent\n", packet.header.seq_num);
       // }
       // packet_num++;
       
