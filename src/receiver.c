@@ -148,6 +148,7 @@ void rrecv( unsigned short int udp_port,
             outgoing_header = create_header(0, ack_number, 0, ACK_FLAG);
             outgoing_packet = create_packet(incoming_packet.data, outgoing_header);
             send_len = sendto(sock_fd, &outgoing_packet, sizeof(outgoing_packet), 0, (const struct sock_addr*) &client_addr, len);
+            printf("SENT ACK with ack_number: %d\n", ack_number);
             //TODO: handle errors when ack packet not sent correctly
         }
         

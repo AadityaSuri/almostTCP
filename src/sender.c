@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <fcntl.h>
+#include <time.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -26,9 +27,9 @@
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((b) > (a) ? (a) : (b))
 
-struct packet_retry {
+struct packet_ack {
     packet_t packet;
-    int retries;
+    bool acked;
 };
 
 
@@ -40,12 +41,16 @@ void rsend(char* hostname,
   int sockfd;
   struct sockaddr_in server_addr;
   FILE *file;
+  fd_set readfds;
+  struct timeval tv;
+  int retval;
 
   if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     perror("socket creation failed");
     exit(EXIT_FAILURE);
   }
 
+  // set socket to non-blocking
   fcntl(sockfd, F_SETFL, O_NONBLOCK);
 
   memset(&server_addr, 0, sizeof(server_addr));
@@ -66,7 +71,6 @@ void rsend(char* hostname,
   size_t bytesRead;
   header_t header;
   packet_t packet;
-  // unsigned char buffer[64];
 
   unsigned long long int fileTotalBytes = 0;
   struct stat fileStat;
@@ -78,36 +82,82 @@ void rsend(char* hostname,
 
   int len = sizeof(server_addr);
 
+  int packet_num = 0;
+  struct packet_ack* packets = (struct packet_ack*) malloc(sizeof(struct packet_ack) * bytesToTransfer);
+  if (packets == NULL) {
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+
+  memset(packets, 0, sizeof(packet_t) * bytesToTransfer);
+
   //this while loop will seg fault if bytesToTransfer is > actual file size
   while(totalSent < min(fileTotalBytes, bytesToTransfer))   {
 
-    // read 10 consecutive packets from file and send them
-    for (size_t i = 0; i < MAX_CONSECUTIVE_PACKETS; i++) {
-        unsigned char buffer[PAYLOAD_SZ];
-        memset(buffer, 0, PAYLOAD_SZ);
-        size_t bytesToRead = min(PAYLOAD_SZ, bytesToTransfer - totalSent);
-        size_t bytesRead = fread(buffer, sizeof(unsigned char), bytesToRead, file);
+      unsigned char buffer[PAYLOAD_SZ];
+      memset(buffer, 0, PAYLOAD_SZ);
+      size_t bytesToRead = min(PAYLOAD_SZ, bytesToTransfer - totalSent);
+      size_t bytesRead = fread(buffer, sizeof(unsigned char), bytesToRead, file);
 
-        // header_t header = create_header(seq_num++, 0, bytesRead, 0);
-        packet_t packet = create_packet(buffer, 
-            create_header(seq_num++, 0, bytesRead, 0));
+      // header_t header = create_header(seq_num++, 0, bytesRead, 0);
+      packet_t packet = create_packet(buffer, 
+          create_header(seq_num, 0, bytesRead, 0));
 
+      packets[seq_num].packet = packet;
+      packets[seq_num].acked = false;
+      seq_num++;
+
+      srand(time(NULL));
+      int rand_num = rand() % 100;
+
+      if (rand_num < 50) {
         int send_len = sendto(sockfd, &packet, sizeof(packet.header) + bytesRead,
             0, (const struct sockaddr*) &server_addr,  len);
+      } else {
+        printf("PACKET with seq_num: %d NOT sent\n", packet.header.seq_num);
+      }
+      packet_num++;
+      
 
-        totalSent += bytesRead;
-    }  
+      FD_ZERO(&readfds);
+      FD_SET(sockfd, &readfds);
+      tv.tv_sec = ACK_TIMEOUT / 2000;
+      tv.tv_usec = (ACK_TIMEOUT % 2000) * 1000;
+      retval = select(sockfd + 1, &readfds, NULL, NULL, &tv);
+
+      if (retval == -1) {
+        perror("select");
+        exit(EXIT_FAILURE);
+      } else if (retval) {
+        packet_t ack_packet;
+        recvfrom(sockfd, &ack_packet, sizeof(ack_packet), 
+            0, (const struct sockaddr*) &server_addr, &len);
+
+        if (IS_ACK(ack_packet.header.flags)){
+          printf("RECEIVED ACK with ack_number: %d\n", ack_packet.header.ack_num);
+          packets[ack_packet.header.seq_num].acked = true;
+        }
+
+      } else {
+        printf("TIMEOUT\n");
+        for (size_t i = 0; i < packet_num; i++) {
+          if (!packets[i].acked) {
+            packet_t packet = packets[i].packet;
+            int send_len = sendto(sockfd, &packet, sizeof(packet), 0, (const struct sockaddr*) &server_addr,  len);
+            printf("PACKET RETRANSMITTED with seq_num: %d\n", packet.header.seq_num);
+            if (send_len == -1) {
+              perror("sendto");
+              exit(EXIT_FAILURE);
+            }
+          }
+        }
+
+      }
+
+      totalSent += bytesRead;
   }
 
-  while (true) {
-    packet_t ack_packet;
-    recvfrom(sockfd, &ack_packet, sizeof(ack_packet), 
-        0, (const struct sockaddr*) &server_addr, &len);
-
-    if (IS_ACK(ack_packet.header.flags)){
-      printf("RECEIVED ACK with ack_number: %d\n", ack_packet.header.ack_num);
-    }
-  }
+  printf("%d packets sent\n", packet_num);
 
 
   header = create_header(0,0,0, FIN_FLAG);
@@ -115,6 +165,11 @@ void rsend(char* hostname,
   sendto(sockfd, &packet, sizeof(packet), 0,
     (const struct sockaddr*) &server_addr,  sizeof(server_addr));
   printf("SENT FIN\n");
+
+  free(packets);
+
+  //close socket
+  close(sockfd);
 
 }
 
