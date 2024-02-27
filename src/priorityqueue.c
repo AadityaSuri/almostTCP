@@ -69,12 +69,12 @@ void heapify(PriorityQueue* priority_queue, int root){
  * @brief Enqueues a new element with the given priority into the priority queue.
  * 
  * @param priority_queue The priority queue.
- * @param priority The priority of the packet to enqueue.
- * @param paclet The packet to enqueue.
+ * @param priority The priority of the element to enqueue.
+ * @param data The data associated with the element.
  * @return -1 if the queue is full, otherwise 0.
  */
 
-int enqueue(PriorityQueue* priority_queue, int priority, packet_t packet){
+int enqueue(PriorityQueue* priority_queue, int priority, char* data){
     if (priority_queue->size == MAX_QUEUE_SIZE){
         return -1;
     }
@@ -83,7 +83,12 @@ int enqueue(PriorityQueue* priority_queue, int priority, packet_t packet){
     priority_queue->size = priority_queue->size + 1;
 
     priority_queue->heap[i].priority = priority;
-    priority_queue->heap[i].packet = packet;
+
+    if (data){
+        for (size_t n = 0; n < sizeof(data); n++) {
+            priority_queue->heap[i].data[n] = data[n];
+        }
+    }
 
     while(i !=0 && priority_queue->heap[(i-1)/2].priority > priority_queue->heap[i].priority) {
         swapQueueNodes(&priority_queue->heap[i], &priority_queue->heap[(i-1)/2]);

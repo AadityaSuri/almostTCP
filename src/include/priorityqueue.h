@@ -1,6 +1,5 @@
 #ifndef PRIORITYQUEUE_H
 #define PRIORITYQUEUE_H
-
 /**
  * @file priorityqueue.h
  * @brief Definitions for a priority queue.
@@ -16,7 +15,7 @@
  */
 typedef struct {
     int priority;
-    packet_t packet; 
+    char data[PAYLOAD_SZ]; 
 } QueueNode;
 
 /**
@@ -59,7 +58,7 @@ void heapify(PriorityQueue* priority_queue, int root);
  * @param data The data associated with the element.
  * @return -1 if the queue is full, otherwise 0.
  */
-int enqueue(PriorityQueue* priority_queue, int priority, packet_t packet);
+int enqueue(PriorityQueue* priority_queue, int priority, char* data);
 
 /**
  * @brief Dequeues the element with the highest priority from the priority queue.

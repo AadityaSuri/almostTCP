@@ -132,7 +132,7 @@ void rrecv( unsigned short int udp_port,
                 ack_number = incoming_packet.header.seq_num;
                 //enqueue packet with priority seq_num to be written later
                 printf("ENQUEUING  packet with seq_num: %d\n", incoming_packet.header.seq_num);
-                enqueue(packet_queue, incoming_packet.header.seq_num, incoming_packet);
+                enqueue(packet_queue, incoming_packet.header.seq_num, incoming_packet.data);
             } else {
                 //write packet
                 printf("WRITING packet with seq_num: %d\n", incoming_packet.header.seq_num);
@@ -147,7 +147,7 @@ void rrecv( unsigned short int udp_port,
                 printf("PEAKING AT QUEUE\n");
                 QueueNode dequeued_node = dequeue(packet_queue);
                 printf("WRITING QUEUED  packet with seq_num: %d\n", dequeued_node.priority);
-                total_bytes_written += writeWithRate(dequeued_node.packet.data, dequeued_node.packet.header.length, write_rate, total_bytes_written, start_time, outfile);
+                total_bytes_written += writeWithRate(dequeued_node.data, sizeof(dequeued_node.data), write_rate, total_bytes_written, start_time, outfile);
                 //TODO: handle errors with return value of writeWithRate
             }
 
