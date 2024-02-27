@@ -130,7 +130,7 @@ void rrecv( unsigned short int udp_port,
             } else {
                 //write packet
                 printf("WRITING packet with seq_num: %d\n", incoming_packet.header.seq_num);
-                total_bytes_written += writeWithRate(incoming_packet.data, sizeof(incoming_packet.data), write_rate, total_bytes_written, start_time, outfile);
+                total_bytes_written += writeWithRate(incoming_packet.data, incoming_packet.header.length, write_rate, total_bytes_written, start_time, outfile);
                 //TODO: handle errors with return value of writeWithRate
                 ack_number = expected_sequence;
                 expected_sequence+=1;
@@ -146,7 +146,7 @@ void rrecv( unsigned short int udp_port,
             }
 
             outgoing_header = create_header(0, ack_number, 0, ACK_FLAG);
-            outgoing_packet = create_packet(NULL, outgoing_header);
+            outgoing_packet = create_packet(incoming_packet.data, outgoing_header);
             send_len = sendto(sock_fd, &outgoing_packet, sizeof(outgoing_packet), 0, (const struct sock_addr*) &client_addr, len);
             //TODO: handle errors when ack packet not sent correctly
         }

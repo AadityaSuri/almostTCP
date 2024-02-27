@@ -16,7 +16,7 @@
 #include <errno.h>
 
 #include "packet.h"
-#include "packet_list.h"
+#include "dynamic_list.h"
 
 #define ACK_TIMEOUT 1000
 #define MAX_RETRIES 5
@@ -78,27 +78,49 @@ void rsend(char* hostname,
   //this while loop will seg fault if bytesToTransfer is > actual file size
   while(totalSent < min(fileTotalBytes, bytesToTransfer))   {
 
-
     // read 10 consecutive packets from file and send them
-    for (size_t i = 0; i < 10; i++) {
-        unsigned char buffer[256];
-        memset(buffer, 0, 256);
-        size_t bytesRead = fread(buffer, sizeof(unsigned char), 256, file);
+    for (size_t i = 0; i < MAX_CONSECUTIVE_PACKETS; i++) {
+        unsigned char buffer[PAYLOAD_SZ];
+        memset(buffer, 0, PAYLOAD_SZ);
+        size_t bytesToRead = min(PAYLOAD_SZ, bytesToTransfer - totalSent);
+        size_t bytesRead = fread(buffer, sizeof(unsigned char), bytesToRead, file);
 
         // header_t header = create_header(seq_num++, 0, bytesRead, 0);
         packet_t packet = create_packet(buffer, 
             create_header(seq_num++, 0, bytesRead, 0));
 
-        struct packet_retry packet_retry = (struct packet_retry) {
-            .packet = packet,
-            .retries = 0
-        };
+        // int bytesToSend = sizeof(packet.header) + min(bytesRead, bytesToTransfer - totalSent);
 
         int send_len = sendto(sockfd, &packet, sizeof(packet.header) + bytesRead,
             0, (const struct sockaddr*) &server_addr,  len);
 
         totalSent += bytesRead;
+
     }
+
+    // unsigned char buffer[PAYLOAD_SZ];
+    // memset(buffer, 0, PAYLOAD_SZ);
+    // int bytesToRead = min(PAYLOAD_SZ, bytesToTransfer - totalSent);
+    // size_t bytesRead = fread(buffer, sizeof(unsigned char), bytesToRead, file);
+    // //prtinf buffer
+    // printf("%s\n", buffer);
+    
+    // // printf("%s\n", buffer);
+
+    // // header_t header = create_header(seq_num++, 0, bytesRead, 0);
+    // packet_t packet = create_packet(buffer, 
+    //     create_header(seq_num++, 0, bytesRead, 0));
+    
+    // // printf("%s\n", packet.data);
+
+    // // int bytesToSend = min(bytesRead, bytesToTransfer - totalSent);
+
+    // int send_len = sendto(sockfd, &packet, sizeof(packet.header) + bytesRead,
+    //     0, (const struct sockaddr*) &server_addr,  len);
+
+    // // append_packet(packet_list, &packet);
+    // totalSent += bytesRead;
+    // printf("SENT %d\n", totalSent);
 
     /*
     wait for ack from all 10 packets
@@ -110,7 +132,7 @@ void rsend(char* hostname,
     //         0, (const struct sockaddr*) &server_addr, &len);
     // }
     // totalSent += packet.header.length;
-    int debug = 0;
+    // int debug = 0;
   }
   header = create_header(0,0,0, FIN_FLAG);
   packet = create_packet(NULL, header);

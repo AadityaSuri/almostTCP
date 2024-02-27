@@ -16,6 +16,8 @@
 #define IS_SYN_ACK(flags) flags & SYN_ACK_FLAG
 #define HAS_FLAGS(flags) IS_ACK(flags) | IS_SYN(flags) | IS_FIN(flags)
 
+#define PAYLOAD_SZ 256
+
 
 typedef struct header {
     uint32_t seq_num;
@@ -27,7 +29,7 @@ typedef struct header {
 
 typedef struct packet {
     header_t header;
-    unsigned char data[64];
+    unsigned char data[PAYLOAD_SZ];
 } packet_t;
 
 header_t create_header(uint32_t seq_number, uint32_t ack_number, uint16_t length, uint16_t flags);
