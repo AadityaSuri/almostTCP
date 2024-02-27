@@ -1,3 +1,5 @@
+#pragma once
+
 #define MAX_QUEUE_SIZE 100
 
 typedef struct {

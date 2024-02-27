@@ -23,7 +23,7 @@ packet_t create_packet(unsigned char data[], header_t pkt_header) {
 
 
   if (data){
-    for (size_t i = 0; i < sizeof(created_packet.data); i++) {
+    for (size_t i = 0; i < created_packet.header.length; i++) {
       created_packet.data[i] = data[i];
     }
   }
