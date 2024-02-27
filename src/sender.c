@@ -6,6 +6,7 @@
 #include <inttypes.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <fcntl.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -44,6 +45,8 @@ void rsend(char* hostname,
     perror("socket creation failed");
     exit(EXIT_FAILURE);
   }
+
+  fcntl(sockfd, F_SETFL, O_NONBLOCK);
 
   memset(&server_addr, 0, sizeof(server_addr));
 
@@ -89,26 +92,24 @@ void rsend(char* hostname,
         packet_t packet = create_packet(buffer, 
             create_header(seq_num++, 0, bytesRead, 0));
 
-        // int bytesToSend = sizeof(packet.header) + min(bytesRead, bytesToTransfer - totalSent);
-
         int send_len = sendto(sockfd, &packet, sizeof(packet.header) + bytesRead,
             0, (const struct sockaddr*) &server_addr,  len);
 
         totalSent += bytesRead;
-
-    }
-    /*
-    wait for ack from all 10 packets
-    */
-
-    // while (true) {
-    //     packet_t ack_packet;
-    //     recvfrom(sockfd, &ack_packet, sizeof(ack_packet), 
-    //         0, (const struct sockaddr*) &server_addr, &len);
-    // }
-    // totalSent += packet.header.length;
-    // int debug = 0;
+    }  
   }
+
+  while (true) {
+    packet_t ack_packet;
+    recvfrom(sockfd, &ack_packet, sizeof(ack_packet), 
+        0, (const struct sockaddr*) &server_addr, &len);
+
+    if (IS_ACK(ack_packet.header.flags)){
+      printf("RECEIVED ACK with ack_number: %d\n", ack_packet.header.ack_num);
+    }
+  }
+
+
   header = create_header(0,0,0, FIN_FLAG);
   packet = create_packet(NULL, header);
   sendto(sockfd, &packet, sizeof(packet), 0,
