@@ -115,7 +115,7 @@ void rrecv( unsigned short int udp_port,
     int len = sizeof(client_addr);
 
     while(connection_open){
-        recv_len = recvfrom(sock_fd, &incoming_packet, sizeof(incoming_packet), 0, (const struct sock_addr*) &client_addr, sizeof(client_addr));
+        recv_len = recvfrom(sock_fd, &incoming_packet, sizeof(incoming_packet), 0, (const struct sock_addr*) &client_addr, &len);
 
         if (IS_FIN(incoming_packet.header.flags)){
             //handle flags, send FIN ACK?
