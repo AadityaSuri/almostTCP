@@ -1,7 +1,11 @@
+<<<<<<< HEAD
 /**
  * @file packet.h
  * @brief Definitions and functions related to packet headers and creation.
  */
+=======
+#pragma once
+>>>>>>> 12c648bee3a59799418dfcd525cc37e536fcf38b
 
 #include <stdint.h>
 
@@ -20,6 +24,8 @@
 #define IS_FIN(flags) (flags & FIN_FLAG) /**< Check if Finish flag is set */
 #define IS_SYN_ACK(flags) (flags & SYN_ACK_FLAG) /**< Check if Syn-Ack flag combination is set */
 #define HAS_FLAGS(flags) (IS_ACK(flags) | IS_SYN(flags) | IS_FIN(flags)) /**< Check if any flags are set */
+
+#define PAYLOAD_SZ 256
 
 
 /**
@@ -82,7 +88,7 @@ typedef struct header {
 
 typedef struct packet {
     header_t header;
-    unsigned char data[64];
+    unsigned char data[PAYLOAD_SZ];
 } packet_t;
 
 /**

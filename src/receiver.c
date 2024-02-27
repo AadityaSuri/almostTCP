@@ -73,7 +73,7 @@ void rrecv( unsigned short int udp_port,
     time_t start_time;
     time(&start_time);
 
-    FILE *outfile = fopen(destination_file, "a");
+    FILE *outfile = fopen(destination_file, "w");
 
     packet_t incoming_packet, outgoing_packet;
     header_t outgoing_header;
@@ -93,6 +93,9 @@ void rrecv( unsigned short int udp_port,
         exit(EXIT_FAILURE);
     }
 
+    memset(&server_addr, 0, sizeof(server_addr));
+    memset(&client_addr, 0, sizeof(client_addr));
+
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
     server_addr.sin_port = htons(udp_port);
@@ -109,20 +112,22 @@ void rrecv( unsigned short int udp_port,
     uint32_t ack_number;
     size_t total_bytes_written = 0;
 
+    int len = sizeof(client_addr);
+
     while(connection_open){
         recv_len = recvfrom(sock_fd, &incoming_packet, sizeof(incoming_packet), 0, (const struct sock_addr*) &client_addr, sizeof(client_addr));
 
         if (IS_FIN(incoming_packet.header.flags)){
             //handle flags, send FIN ACK?
             connection_open = false;
-            break;
-
+            break;        
         }
         else {
             if(incoming_packet.header.seq_num < expected_sequence){
                 //TODO: discard packet
                 printf("DISCARDING  packet with seq_num: %d\n", incoming_packet.header.seq_num);
                 memset(&incoming_packet, 0, sizeof(incoming_packet));
+                continue;
             } else if (incoming_packet.header.seq_num > expected_sequence) {
                 ack_number = incoming_packet.header.seq_num;
                 //enqueue packet with priority seq_num to be written later
@@ -131,7 +136,7 @@ void rrecv( unsigned short int udp_port,
             } else {
                 //write packet
                 printf("WRITING packet with seq_num: %d\n", incoming_packet.header.seq_num);
-                total_bytes_written += writeWithRate(incoming_packet.data, sizeof(incoming_packet.data), write_rate, total_bytes_written, start_time, outfile);
+                total_bytes_written += writeWithRate(incoming_packet.data, incoming_packet.header.length, write_rate, total_bytes_written, start_time, outfile);
                 //TODO: handle errors with return value of writeWithRate
                 ack_number = expected_sequence;
                 expected_sequence+=1;
@@ -147,8 +152,9 @@ void rrecv( unsigned short int udp_port,
             }
 
             outgoing_header = create_header(0, ack_number, 0, ACK_FLAG);
-            outgoing_packet = create_packet(NULL, outgoing_header);
-            send_len = sendto(sock_fd, &outgoing_packet, sizeof(outgoing_packet), 0, (const struct sock_addr*) &server_addr, sizeof(server_addr));
+            outgoing_packet = create_packet(incoming_packet.data, outgoing_header);
+            send_len = sendto(sock_fd, &outgoing_packet, sizeof(outgoing_packet), 0, (const struct sock_addr*) &client_addr, len);
+            printf("SENT ACK with ack_number: %d\n", ack_number);
             //TODO: handle errors when ack packet not sent correctly
         }
         
