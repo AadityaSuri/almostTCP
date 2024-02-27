@@ -17,6 +17,21 @@
 #include "packet.h"
 #include "priorityqueue.h"
 
+/**
+ * @brief Writes data to a file with a specified rate.
+ * 
+ * This function writes data to the specified file pointer while maintaining a desired write rate. 
+ * If the write rate is set to 0, data is written as fast as possible.
+ * 
+ * @param data The array of characters containing the data to be written.
+ * @param data_len The length of the data array.
+ * @param write_rate The desired write rate in bytes per second. If set to 0, writes data as fast as possible.
+ * @param total_bytes_written The total number of bytes already written to the file.
+ * @param start_time The start time of the writing process.
+ * @param outfile The file pointer to write the data to.
+ * @return The total number of bytes successfully written to the file.
+ */
+
 size_t writeWithRate(char data[], int data_len, unsigned long long int write_rate, size_t total_bytes_written, time_t start_time, FILE* outfile) {
     size_t bytes_written = 0;
     time_t current_time;
@@ -96,14 +111,6 @@ void rrecv( unsigned short int udp_port,
 
     while(connection_open){
         recv_len = recvfrom(sock_fd, &incoming_packet, sizeof(incoming_packet), 0, (const struct sock_addr*) &client_addr, sizeof(client_addr));
-        
-        // if (recv_len < 0) {
-        //     fprintf(stderr, "Socket receive failed: %d\n", recv_len);
-        //     close(sock_fd);
-        //     exit(EXIT_FAILURE);
-        // }
-
-        // printf("INCOMING SEQUENCE:%d\n", incoming_packet.header.seq_num);
 
         if (IS_FIN(incoming_packet.header.flags)){
             //handle flags, send FIN ACK?
