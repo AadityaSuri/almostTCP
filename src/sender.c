@@ -97,31 +97,6 @@ void rsend(char* hostname,
         totalSent += bytesRead;
 
     }
-
-    // unsigned char buffer[PAYLOAD_SZ];
-    // memset(buffer, 0, PAYLOAD_SZ);
-    // int bytesToRead = min(PAYLOAD_SZ, bytesToTransfer - totalSent);
-    // size_t bytesRead = fread(buffer, sizeof(unsigned char), bytesToRead, file);
-    // //prtinf buffer
-    // printf("%s\n", buffer);
-    
-    // // printf("%s\n", buffer);
-
-    // // header_t header = create_header(seq_num++, 0, bytesRead, 0);
-    // packet_t packet = create_packet(buffer, 
-    //     create_header(seq_num++, 0, bytesRead, 0));
-    
-    // // printf("%s\n", packet.data);
-
-    // // int bytesToSend = min(bytesRead, bytesToTransfer - totalSent);
-
-    // int send_len = sendto(sockfd, &packet, sizeof(packet.header) + bytesRead,
-    //     0, (const struct sockaddr*) &server_addr,  len);
-
-    // // append_packet(packet_list, &packet);
-    // totalSent += bytesRead;
-    // printf("SENT %d\n", totalSent);
-
     /*
     wait for ack from all 10 packets
     */
@@ -140,20 +115,6 @@ void rsend(char* hostname,
     (const struct sockaddr*) &server_addr,  sizeof(server_addr));
   printf("SENT FIN\n");
 
-
-  // header_t header = create_header(0, 1, 2, 3, 4);
-  // unsigned char mssg[64] = "hello from sender\n";
-  // packet_t pkt = create_packet(mssg, header);
-
-
-  // while (true) {
-  //   sendto(sockfd, &pkt, sizeof(pkt),
-	// 	0, (const struct sockaddr *) &server_addr,
-	// 		sizeof(server_addr));
-	//   printf("Hello message sent.\n");
-  // }
-  
-
 }
 
 int main(int argc, char** argv) {
@@ -162,11 +123,6 @@ int main(int argc, char** argv) {
     // so that one can invoke the file transfer from the
     // command line.
 
-    // packet_t* pkt = create_packet(0, 1, 2, 3, 4);
-
-    // uint32_t checksum = compute_checksum(pkt);
-    //
-    // printf("%" PRIu32, checksum);   
     
     int hostUDPport;
     unsigned long long int bytesToTransfer;
@@ -180,7 +136,6 @@ int main(int argc, char** argv) {
     hostname = argv[1];
     bytesToTransfer = atoll(argv[4]);
 
-    // rsend("localhost", 8080, "testfile.txt", 100);
     rsend(hostname, hostUDPport, argv[3], bytesToTransfer);
 
     return (EXIT_SUCCESS);
