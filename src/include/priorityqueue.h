@@ -1,7 +1,12 @@
+#ifndef PRIORITYQUEUE_H
+#define PRIORITYQUEUE_H
+
 /**
  * @file priorityqueue.h
  * @brief Definitions for a priority queue.
  */
+
+#include "packet.h"
 
 #define MAX_QUEUE_SIZE 100 /**< Maximum size of the priority queue. */
 
@@ -10,8 +15,8 @@
  * @brief Structure representing a node in the priority queue.
  */
 typedef struct {
-    int priority;    /**< Priority of the node. */
-    char data[64];   /**< Data associated with the node. */
+    int priority;
+    packet_t packet; 
 } QueueNode;
 
 /**
@@ -54,7 +59,7 @@ void heapify(PriorityQueue* priority_queue, int root);
  * @param data The data associated with the element.
  * @return -1 if the queue is full, otherwise 0.
  */
-int enqueue(PriorityQueue* priority_queue, int priority, char* data);
+int enqueue(PriorityQueue* priority_queue, int priority, packet_t packet);
 
 /**
  * @brief Dequeues the element with the highest priority from the priority queue.
@@ -71,3 +76,5 @@ QueueNode dequeue(PriorityQueue* priority_queue);
  * @return The priority of the element at the front of the queue, or -1 if the queue is empty.
  */
 int peak(PriorityQueue* priority_queue);
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef PACKET_H
+#define PACKET_H
+
 /**
  * @file packet.h
  * @brief Definitions and functions related to packet headers and creation.
@@ -5,7 +8,7 @@
 
 #include <stdint.h>
 
-#define PAYLOAD_SZ 256
+#define PAYLOAD_SZ 128
 
 // Define flag values for packet headers
 #define URG_FLAG 0b1000000000000000 /**< Urgent flag */
@@ -42,7 +45,7 @@ typedef struct header {
 
 typedef struct packet {
     header_t header;
-    unsigned char data[64];
+    unsigned char data[PAYLOAD_SZ];
 } packet_t;
 
 /**
@@ -64,3 +67,5 @@ header_t create_header(uint32_t seq_number, uint32_t ack_number, uint16_t length
  * @return The created packet.
  */
 packet_t create_packet(unsigned char [], header_t pkt_header);
+
+#endif
