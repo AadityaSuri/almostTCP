@@ -79,11 +79,10 @@ void rsend(char* hostname,
 
 
     // read 10 consecutive packets from file and send them
-
     for (size_t i = 0; i < 10; i++) {
-        unsigned char buffer[64];
-        memset(buffer, 0, 64);
-        size_t bytesRead = fread(buffer, 1, 64, file);
+        unsigned char buffer[256];
+        memset(buffer, 0, 256);
+        size_t bytesRead = fread(buffer, sizeof(unsigned char), 256, file);
 
         // header_t header = create_header(seq_num++, 0, bytesRead, 0);
         packet_t packet = create_packet(buffer, 
@@ -97,40 +96,20 @@ void rsend(char* hostname,
         int send_len = sendto(sockfd, &packet, sizeof(packet.header) + bytesRead,
             0, (const struct sockaddr*) &server_addr,  len);
 
-        // packet_t ack_packet;
-        // recvfrom(sockfd, &ack_packet, sizeof(ack_packet), 
-        //     0, (const struct sockaddr*) &server_addr, sizeof(server_addr));
-
+        totalSent += bytesRead;
     }
 
     /*
     wait for ack from all 10 packets
     */
 
-    while (true) {
-        packet_t ack_packet;
-        recvfrom(sockfd, &ack_packet, sizeof(ack_packet), 
-            0, (const struct sockaddr*) &server_addr, &len);
-    }
-
-    // int retries = 0;
-    // while (retries < MAX_RETRIES) {
-    //   if (sendto(sockfd, &packet, sizeof(header) + bytesRead, 0,
-    //     (const struct sockaddr*) &server_addr,  sizeof(server_addr)) < 0) {
-    //     }
-    //   }
-
-    // packet_t ack_packet = create_packet(NULL, header);
-    // sendto(sockfd, &ack_packet, sizeof(ack_packet), 
-    //     0, (const struct sockaddr*) &server_addr,  sizeof(server_addr));
-
-
-    // if (recvfrom(sockfd, &ack_packet, sizeof(ack_packet), 
-    //     0, (const struct sockaddr*) &server_addr, sizeof(server_addr)) < 0) {
-    // }      
-
-
-    totalSent += packet.header.length;
+    // while (true) {
+    //     packet_t ack_packet;
+    //     recvfrom(sockfd, &ack_packet, sizeof(ack_packet), 
+    //         0, (const struct sockaddr*) &server_addr, &len);
+    // }
+    // totalSent += packet.header.length;
+    int debug = 0;
   }
   header = create_header(0,0,0, FIN_FLAG);
   packet = create_packet(NULL, header);
