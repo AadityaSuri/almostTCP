@@ -115,7 +115,7 @@ void rsend(char* hostname,
       // } else {
       //   printf("PACKET with seq_num: %d NOT sent\n", packet.header.seq_num);
       // }
-      // packet_num++;
+      packet_num++;
       
 
       FD_ZERO(&readfds);
