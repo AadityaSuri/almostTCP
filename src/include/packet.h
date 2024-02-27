@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdint.h>
 
 #define URG_FLAG 0b1000000000000000
