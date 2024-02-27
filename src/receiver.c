@@ -114,14 +114,14 @@ void rrecv( unsigned short int udp_port,
         if (IS_FIN(incoming_packet.header.flags)){
             //handle flags, send FIN ACK?
             connection_open = false;
-            break;
-
+            break;        
         }
         else {
             if(incoming_packet.header.seq_num < expected_sequence){
                 //TODO: discard packet
                 printf("DISCARDING  packet with seq_num: %d\n", incoming_packet.header.seq_num);
                 memset(&incoming_packet, 0, sizeof(incoming_packet));
+                continue;
             } else if (incoming_packet.header.seq_num > expected_sequence) {
                 ack_number = incoming_packet.header.seq_num;
                 //enqueue packet with priority seq_num to be written later

@@ -110,13 +110,13 @@ void rsend(char* hostname,
       srand(time(NULL));
       int rand_num = rand() % 100;
 
-      if (rand_num < 50) {
-        int send_len = sendto(sockfd, &packet, sizeof(packet.header) + bytesRead,
+      // if (rand_num < 10) {
+      int send_len = sendto(sockfd, &packet, sizeof(packet.header) + bytesRead,
             0, (const struct sockaddr*) &server_addr,  len);
-      } else {
-        printf("PACKET with seq_num: %d NOT sent\n", packet.header.seq_num);
-      }
-      packet_num++;
+      // } else {
+        // printf("PACKET with seq_num: %d NOT sent\n", packet.header.seq_num);
+      // }
+      // packet_num++;
       
 
       FD_ZERO(&readfds);
