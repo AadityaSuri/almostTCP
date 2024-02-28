@@ -7,6 +7,8 @@
 #include <netinet/in.h>
 
 #include <sys/types.h>
+#include <time.h>
+#include <sys/time.h>   
 #include <sys/socket.h>
 #include <unistd.h>
 #include <time.h>
@@ -114,11 +116,31 @@ void rrecv( unsigned short int udp_port,
 
     int len = sizeof(client_addr);
 
-    while(connection_open){
+    bool first_packet_received = false;
+
+    struct timeval tic, toc;
+
+    while(connection_open){ 
+
         recv_len = recvfrom(sock_fd, &incoming_packet, sizeof(incoming_packet), 0, (const struct sock_addr*) &client_addr, &len);
+        if (recv_len == -1) {
+            perror("recvfrom");
+            exit(EXIT_FAILURE);
+        } 
+
+        if (!first_packet_received) {
+            gettimeofday(&tic, NULL);
+            first_packet_received = true;
+        }
 
         if (IS_FIN(incoming_packet.header.flags)){
-            //handle flags, send FIN ACK?
+            // measure end time here
+
+            gettimeofday(&toc, NULL);
+            double elapsed_time = (double) (toc.tv_sec - tic.tv_sec) * 1000.0;
+            elapsed_time += (double) (toc.tv_usec - tic.tv_usec) / 1000.0;
+            printf("elapsed time: %.3f\n", elapsed_time);
+
             connection_open = false;
             break;        
         }
@@ -159,8 +181,8 @@ void rrecv( unsigned short int udp_port,
         }
         
     }
+
     fclose(outfile);
-    printf("DIFFERENCE BETWEEN START AND END TIME: %f", (double)difftime(time(NULL), start_time));
     exit(EXIT_SUCCESS);
 }            
 
