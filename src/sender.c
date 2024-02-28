@@ -19,7 +19,7 @@
 
 #include "packet.h"
 
-#define ACK_TIMEOUT 1000
+#define ACK_TIMEOUT 500
 #define MAX_RETRIES 5
 #define MAX_CONSECUTIVE_PACKETS 10
 
@@ -106,15 +106,15 @@ void rsend(char* hostname,
       packets[seq_num].acked = false;
       seq_num++;
 
-      srand(time(NULL));
-      int rand_num = rand() % 100;
+      // srand(time(NULL));
+      // int rand_num = rand() % 100;
 
-      if (rand_num < 40) {
+      // if (rand_num < 40) {
       int send_len = sendto(sockfd, &packet, sizeof(packet.header) + bytesRead,
             0, (const struct sockaddr*) &server_addr,  len);
-      } else {
-        printf("PACKET with seq_num: %d NOT sent\n", packet.header.seq_num);
-      }
+      // } else {
+      //   printf("PACKET with seq_num: %d NOT sent\n", packet.header.seq_num);
+      // }
       packet_num++;
       
 

@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 
-#define PAYLOAD_SZ 1024
+#define PAYLOAD_SZ 512
 
 // Define flag values for packet headers
 #define URG_FLAG 0b1000000000000000 /**< Urgent flag */

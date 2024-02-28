@@ -160,7 +160,7 @@ void rrecv( unsigned short int udp_port,
         
     }
     fclose(outfile);
-    printf("DIFFERENCE BETWEEN START AND END TIME: %f", difftime(time(NULL), start_time));
+    printf("DIFFERENCE BETWEEN START AND END TIME: %f", (double)difftime(time(NULL), start_time));
     exit(EXIT_SUCCESS);
 }            
 
