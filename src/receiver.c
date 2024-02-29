@@ -40,11 +40,13 @@ size_t writeWithRate(char data[], int data_len, unsigned long long int write_rat
     time(&current_time);
 
     if (write_rate == 0) {
-        for (size_t i = 0; i < data_len; i++){
-            // printf("%c", data[i]);
-            bytes_written += fprintf(outfile, "%c", data[i]);
-            // printf("%c", data[i]);
-        }
+        // for (size_t i = 0; i < data_len; i++){
+        //     // printf("%c", data[i]);
+        //     bytes_written += fprintf(outfile, "%c", data[i]);\
+
+        //     // printf("%c", data[i]);
+        // }
+        bytes_written = fwrite(data, sizeof(char), data_len, outfile);
         //TODO: handle error if bytes written is not correct value
         return bytes_written;
     }
@@ -116,6 +118,7 @@ void rrecv( unsigned short int udp_port,
 
     int len = sizeof(client_addr);
 
+    //debugging 
     bool first_packet_received = false;
 
     struct timeval tic, toc;
@@ -128,6 +131,7 @@ void rrecv( unsigned short int udp_port,
             exit(EXIT_FAILURE);
         } 
 
+        //debugging
         if (!first_packet_received) {
             gettimeofday(&tic, NULL);
             first_packet_received = true;
