@@ -6,4 +6,5 @@ receiver
 obj/*
 bpoints*
 *.txt
+*.jpeg
 .idea/

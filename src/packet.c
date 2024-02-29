@@ -1,6 +1,8 @@
 /**
  * @file packet.c
  * @brief Functions for creating packets and packet headers.
+ * @author Connor Johst - cjohst & Aaditya Suri - AadityaSuri
+ * @bug No known bugs
  */
 
 #include <stdint.h>
