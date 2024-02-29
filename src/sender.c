@@ -93,10 +93,19 @@ void rsend(char* hostname,
   //this while loop will seg fault if bytesToTransfer is > actual file size
   while(totalSent < min(fileTotalBytes, bytesToTransfer))   {
 
-      unsigned char buffer[PAYLOAD_SZ];
+    unsigned char buffer[PAYLOAD_SZ];
+    size_t bytes_read_in_for_loop = 0;
+    
+    for (size_t i = 0; i < 10; i++) {
+
       memset(buffer, 0, PAYLOAD_SZ);
       size_t bytesToRead = min(PAYLOAD_SZ, bytesToTransfer - totalSent);
-      size_t bytesRead = fread(buffer, sizeof(unsigned char), bytesToRead, file);
+      size_t bytes_read = fread(buffer, sizeof(unsigned char), bytesToRead, file);
+
+      if (bytes_read < bytesToRead) {
+        break;
+      }
+      bytes_read_in_for_loop += bytes_read;
 
       // header_t header = create_header(seq_num++, 0, bytesRead, 0);
       packet_t packet = create_packet(buffer, 
@@ -110,7 +119,7 @@ void rsend(char* hostname,
             0, (const struct sockaddr*) &server_addr,  len);
 
       packet_num++;
-      
+    }
 
       FD_ZERO(&readfds);
       FD_SET(sockfd, &readfds);
@@ -147,7 +156,7 @@ void rsend(char* hostname,
 
       }
 
-      totalSent += bytesRead;
+      totalSent += bytes_read_in_for_loop;
   }
 
   printf("%d packets sent\n", packet_num);
