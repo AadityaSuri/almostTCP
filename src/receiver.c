@@ -180,7 +180,7 @@ void rrecv( unsigned short int udp_port,
                 //enqueue packet with priority seq_num to be written later
                 printf("%d %d\n", ack_number, expected_sequence);
                 printf("ENQUEUING  packet with seq_num: %d\n", incoming_packet.header.seq_num);
-                enqueue(packet_queue, incoming_packet.header.seq_num, incoming_packet.data, sizeof(incoming_packet.data));
+                enqueue(packet_queue, incoming_packet.header.seq_num, incoming_packet.data, incoming_packet.header.length);
             } else {
                 //write packet
                 printf("WRITING packet with seq_num: %d\n", incoming_packet.header.seq_num);
