@@ -180,7 +180,7 @@ void rrecv( unsigned short int udp_port,
                 //enqueue packet with priority seq_num to be written later
                 printf("%d %d\n", ack_number, expected_sequence);
                 printf("ENQUEUING  packet with seq_num: %d\n", incoming_packet.header.seq_num);
-                enqueue(packet_queue, incoming_packet.header.seq_num, incoming_packet.data);
+                enqueue(packet_queue, incoming_packet.header.seq_num, incoming_packet.data, sizeof(incoming_packet.data));
             } else {
                 //write packet
                 printf("WRITING packet with seq_num: %d\n", incoming_packet.header.seq_num);
@@ -255,4 +255,33 @@ int main(int argc, char** argv) {
     write_rate = (unsigned long long int) atoi(argv[3]);
 
     rrecv(udp_port, destination_file, write_rate);
+
+//     PriorityQueue* pq = createPriorityQueue();
+
+
+//     header_t t1 = create_header(1,0,0,0);
+//     header_t t2 = create_header(2,0,0,0);
+//     header_t t3 = create_header(3,0,0,0);
+//     header_t t4 = create_header(4,0,0,0);
+
+//     packet_t p1 = create_packet(NULL, t1);
+//     packet_t p2 = create_packet(NULL, t2);
+//     packet_t p3 = create_packet(NULL, t3);
+//     packet_t p4 = create_packet(NULL, t4);
+
+//     enqueue(pq, p4.header.seq_num, NULL, 0);
+//     enqueue(pq, p2.header.seq_num, NULL, 0);
+//     enqueue(pq, p1.header.seq_num, NULL, 0);
+//     enqueue(pq, p3.header.seq_num, NULL, 0);
+
+//     while(true){
+//     int peak_val = peak(pq);
+//     printf("PEAK: %d", peak_val);
+//     if (peak_val != -1){
+//         dequeue(pq);
+//     } else {
+//         break;
+//     }
+
+// }
 }

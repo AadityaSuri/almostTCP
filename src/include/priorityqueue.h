@@ -61,7 +61,7 @@ void heapify(PriorityQueue* priority_queue, int root);
  * @param data The data associated with the element.
  * @return -1 if the queue is full, otherwise 0.
  */
-int enqueue(PriorityQueue* priority_queue, int priority, char* data);
+int enqueue(PriorityQueue* priority_queue, int priority, char* data, size_t data_len);
 
 /**
  * @brief Dequeues the element with the highest priority from the priority queue.

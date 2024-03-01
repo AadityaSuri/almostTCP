@@ -76,7 +76,7 @@ void heapify(PriorityQueue* priority_queue, int root){
  * @return -1 if the queue is full, otherwise 0.
  */
 
-int enqueue(PriorityQueue* priority_queue, int priority, char* data){
+int enqueue(PriorityQueue* priority_queue, int priority, char* data, size_t data_len){
     if (priority_queue->size == MAX_QUEUE_SIZE){
         return -1;
     }
@@ -86,12 +86,12 @@ int enqueue(PriorityQueue* priority_queue, int priority, char* data){
     node_to_enqueue.priority = priority;
 
     if (data){
-        for (size_t n = 0; n < sizeof(data); n++) {
+        for (size_t n = 0; n < data_len; n++) {
             node_to_enqueue.data[n] = data[n];
         }
     }
 
-    int i = priority_queue->size + 1;
+    int i = priority_queue->size;
     priority_queue->size = priority_queue->size + 1;
 
     priority_queue->heap[i] = node_to_enqueue;
