@@ -1,9 +1,12 @@
-#ifndef PRIORITYQUEUE_H
-#define PRIORITYQUEUE_H
 /**
  * @file priorityqueue.h
  * @brief Definitions for a priority queue.
+ * @author Connor Johst - cjohst & Aaditya Suri - AadityaSuri   
+ * @bug No known bugs
  */
+
+#ifndef PRIORITYQUEUE_H
+#define PRIORITYQUEUE_H
 
 #include "packet.h"
 

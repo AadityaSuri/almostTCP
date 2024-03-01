@@ -1,0 +1,4 @@
+<map id="packet" name="packet">
+<area shape="rect" id="node1" title="Structure representing a packet with header and data." alt="" coords="6,95,71,121"/>
+<area shape="rect" id="node2" href="$structheader.html" title="Structure representing a packet header." alt="" coords="5,5,72,32"/>
+</map>

@@ -1,3 +1,10 @@
+/**
+ * @file main.c
+ * @brief Implements a receiver program for writing data with specified rate.
+ * @author Connor Johst - cjohst & Aaditya Suri - AadityaSuri
+ * @bug Program terminates when any socket reads encounter an error 
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -69,7 +76,16 @@ size_t writeWithRate(char data[], int data_len, unsigned long long int write_rat
     return bytes_written;
 }
 
-
+/**
+ * @brief Receives data packets over UDP, writes them to a file, and sends acknowledgments.
+ * 
+ * This function acts as a receiver for UDP packets, writing received data to a specified file 
+ * while also sending acknowledgments back to the sender. It maintains a desired write rate if specified.
+ * 
+ * @param udp_port The UDP port to listen for incoming packets.
+ * @param destination_file The file to write the received data to.
+ * @param write_rate The desired write rate in bytes per second. If set to 0, writes data as fast as possible.
+ */
 void rrecv( unsigned short int udp_port, 
             char* destination_file, 
             unsigned long long int write_rate) {
@@ -102,7 +118,7 @@ void rrecv( unsigned short int udp_port,
 
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port = htons(udp_port);
+    server_addr.sin_port = udp_port;
 
     int bind_code = bind(sock_fd, (const struct sockaddr*) &server_addr, sizeof(server_addr));
     if (bind_code < 0) {
@@ -111,7 +127,8 @@ void rrecv( unsigned short int udp_port,
         exit(EXIT_FAILURE);
     }
 
-    bool connection_open = true; //is this always true?
+    bool connection_open = true;
+
     uint32_t expected_sequence = 0;
     uint32_t ack_number;
     size_t total_bytes_written = 0;
@@ -163,7 +180,6 @@ void rrecv( unsigned short int udp_port,
                 //write packet
                 printf("WRITING packet with seq_num: %d\n", incoming_packet.header.seq_num);
                 total_bytes_written += writeWithRate(incoming_packet.data, incoming_packet.header.length, write_rate, total_bytes_written, start_time, outfile);
-                //TODO: handle errors with return value of writeWithRate
                 ack_number = expected_sequence;
                 expected_sequence+=1;
 
@@ -174,12 +190,15 @@ void rrecv( unsigned short int udp_port,
                 QueueNode dequeued_node = dequeue(packet_queue);
                 printf("WRITING QUEUED  packet with seq_num: %d\n", dequeued_node.priority);
                 total_bytes_written += writeWithRate(dequeued_node.data, sizeof(dequeued_node.data), write_rate, total_bytes_written, start_time, outfile);
-                //TODO: handle errors with return value of writeWithRate
             }
 
             outgoing_header = create_header(0, ack_number, 0, ACK_FLAG);
             outgoing_packet = create_packet(incoming_packet.data, outgoing_header);
             send_len = sendto(sock_fd, &outgoing_packet, sizeof(outgoing_packet), 0, (const struct sock_addr*) &client_addr, len);
+            if (send_len < 0) {
+                fprintf(stderr, "Ack send failed: %d\n", send_len);
+                exit(EXIT_FAILURE);
+            }
             printf("SENT ACK with ack_number: %d\n", ack_number);
             //TODO: handle errors when ack packet not sent correctly
         }

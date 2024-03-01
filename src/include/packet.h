@@ -1,30 +1,25 @@
-#ifndef PACKET_H
-#define PACKET_H
-
 /**
  * @file packet.h
  * @brief Definitions and functions related to packet headers and creation.
+ * @author Connor Johst - cjohst & Aaditya Suri - AadityaSuri
+ * @bug No known bugs
  */
+
+#ifndef PACKET_H
+#define PACKET_H
 
 #include <stdint.h>
 
-#define PAYLOAD_SZ 500
+#define PAYLOAD_SZ 500 // bytes of data contained within each packet.
 
 // Define flag values for packet headers
-#define URG_FLAG 0b1000000000000000 /**< Urgent flag */
-#define ACK_FLAG 0b0100000000000000 /**< Acknowledgment flag */
-#define PSH_FLAG 0b0010000000000000 /**< Push flag */
-#define RST_FLAG 0b0001000000000000 /**< Reset flag */
-#define SYN_FLAG 0b0000100000000000 /**< Synchronize flag */
-#define FIN_FLAG 0b0000010000000000 /**< Finish flag */
-#define SYN_ACK_FLAG SYN_FLAG | ACK_FLAG /**< Syn-Ack flag combination */
+#define ACK_FLAG 0b0100000000000000 //Ack flag
+#define FIN_FLAG 0b0000010000000000 // Finish flag 
+
 
 // Macros to check flag values
-#define IS_ACK(flags) (flags & ACK_FLAG) /**< Check if Acknowledgment flag is set */
-#define IS_SYN(flags) (flags & SYN_FLAG) /**< Check if Synchronize flag is set */
-#define IS_FIN(flags) (flags & FIN_FLAG) /**< Check if Finish flag is set */
-#define IS_SYN_ACK(flags) (flags & SYN_ACK_FLAG) /**< Check if Syn-Ack flag combination is set */
-#define HAS_FLAGS(flags) (IS_ACK(flags) | IS_SYN(flags) | IS_FIN(flags)) /**< Check if any flags are set */
+#define IS_ACK(flags) (flags & ACK_FLAG) //
+#define IS_FIN(flags) (flags & FIN_FLAG) //
 
 /**
  * @struct header

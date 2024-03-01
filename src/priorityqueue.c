@@ -1,6 +1,8 @@
 /**
  * @file priorityqueue.c
  * @brief Implementation of a priority queue.
+ * @author Connor Johst - cjohst & Aaditya Suri - AadityaSuri
+ * @bug No known bugs
  */
 
 #include <stddef.h>
