@@ -118,6 +118,7 @@ void rsend(char* hostname,
   memset(packets, 0, sizeof(packet_t) * bytes_to_transfer);
   int packet_index = 0;
 
+  int last_packet_acked = -1;
 
   while(total_bytes_acked < min(file_total_bytes, bytes_to_transfer))   {
 
@@ -148,7 +149,7 @@ void rsend(char* hostname,
       }
         
       printf("SENT PACKET with seq_num: %d\n", packet.header.seq_num);
-      packet_index++;
+      // packet_index++;
 
 
       FD_ZERO(&readfds);
@@ -171,7 +172,8 @@ void rsend(char* hostname,
 
         if (IS_ACK(ack_packet.header.flags)){
           printf("RECEIVED ACK with ack_number: %d\n", ack_packet.header.ack_num);
-          packets[ack_packet.header.seq_num].acked = true;
+          packets[ack_packet.header.ack_num].acked = true;
+          last_packet_acked = ack_packet.header.ack_num;
           total_bytes_acked += bytes_read_from_file;
         }
 
@@ -179,7 +181,8 @@ void rsend(char* hostname,
 
         // if the select call timed out, retransmit any packets that have not been acked
         printf("TIMEOUT\n");
-        for (size_t i = 0; i < packet_index; i++) {
+        printf("LAST PACKET ACKED: %d\n", last_packet_acked);
+        for (size_t i = last_packet_acked + 1; i < seq_num; i++) {
           if (!packets[i].acked) {
             packet_t packet = packets[i].packet;
             int send_len = sendto(sock_fd, &packet, sizeof(packet), 0, (const struct sockaddr*) &server_addr,  len);
@@ -194,7 +197,7 @@ void rsend(char* hostname,
       }
   }
 
-  printf("%d packets sent\n", packet_index);
+  printf("%d packets sent\n", seq_num);
 
 
   header = create_header(0,0,0, FIN_FLAG);

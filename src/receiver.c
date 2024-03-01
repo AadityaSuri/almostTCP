@@ -140,13 +140,17 @@ void rrecv( unsigned short int udp_port,
 
     struct timeval tic, toc;
 
-    while(connection_open){ 
+    bool packet_queue_empty = true;
+
+    while(connection_open){
 
         recv_len = recvfrom(sock_fd, &incoming_packet, sizeof(incoming_packet), 0, (const struct sock_addr*) &client_addr, &len);
         if (recv_len == -1) {
             perror("recvfrom");
             exit(EXIT_FAILURE);
         } 
+
+        printf("RECEIVED PACKET with seq_num: %d\n", incoming_packet.header.seq_num);
 
         //debugging
         if (!first_packet_received) {
@@ -174,6 +178,7 @@ void rrecv( unsigned short int udp_port,
             } else if (incoming_packet.header.seq_num > expected_sequence) {
                 ack_number = incoming_packet.header.seq_num;
                 //enqueue packet with priority seq_num to be written later
+                printf("%d %d\n", ack_number, expected_sequence);
                 printf("ENQUEUING  packet with seq_num: %d\n", incoming_packet.header.seq_num);
                 enqueue(packet_queue, incoming_packet.header.seq_num, incoming_packet.data);
             } else {
@@ -198,6 +203,8 @@ void rrecv( unsigned short int udp_port,
                 expected_sequence += 1;
             }
 
+            // packet_queue_empty = packet_queue->size == 0;
+
             outgoing_header = create_header(0, ack_number, 0, ACK_FLAG);
             outgoing_packet = create_packet(incoming_packet.data, outgoing_header);
             send_len = sendto(sock_fd, &outgoing_packet, sizeof(outgoing_packet), 0, (const struct sock_addr*) &client_addr, len);
@@ -207,8 +214,19 @@ void rrecv( unsigned short int udp_port,
             }
             printf("SENT ACK with ack_number: %d\n", ack_number);
         }
-        
     }
+
+    printf("%d START\n", packet_queue->size);
+    
+    printf("%d\n", peak(packet_queue));
+    while(peak(packet_queue) == expected_sequence) {
+        printf("PEAKING AT QUEUE\n");
+        QueueNode dequeued_node = dequeue(packet_queue);
+        printf("WRITING QUEUED  packet with seq_num: %d\n", dequeued_node.priority);
+        total_bytes_written += writeWithRate(dequeued_node.data, sizeof(dequeued_node.data), write_rate, total_bytes_written, start_time, outfile);
+    }
+
+    printf("%d END\n", packet_queue->size);
 
     fclose(outfile);
     exit(EXIT_SUCCESS);
