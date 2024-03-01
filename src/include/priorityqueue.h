@@ -18,7 +18,7 @@
  */
 typedef struct {
     int priority;
-    char data[PAYLOAD_SZ]; 
+    char data[PAYLOAD_SZ];
 } QueueNode;
 
 /**

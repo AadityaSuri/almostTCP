@@ -140,8 +140,6 @@ void rrecv( unsigned short int udp_port,
 
     struct timeval tic, toc;
 
-    bool packet_queue_empty = true;
-
     while(connection_open){
 
         recv_len = recvfrom(sock_fd, &incoming_packet, sizeof(incoming_packet), 0, (const struct sock_addr*) &client_addr, &len);
@@ -190,10 +188,10 @@ void rrecv( unsigned short int udp_port,
 
             }
             //check if ANY enqueued data can be written and write it
-            while(peak(packet_queue) <= expected_sequence) {
+            while(peak(packet_queue) <= expected_sequence && peak(packet_queue)!=-1) {
                 printf("PEAKING AT QUEUE peek: %d\n", peak(packet_queue));
                 if (peak(packet_queue) < expected_sequence){
-                    //ensure we never write the same packet twice ()
+                    //ensure we never write the same packet twice
                     QueueNode dequeued_node = dequeue(packet_queue);
                     continue;
                 }
@@ -202,8 +200,6 @@ void rrecv( unsigned short int udp_port,
                 total_bytes_written += writeWithRate(dequeued_node.data, sizeof(dequeued_node.data), write_rate, total_bytes_written, start_time, outfile);
                 expected_sequence += 1;
             }
-
-            // packet_queue_empty = packet_queue->size == 0;
 
             outgoing_header = create_header(0, ack_number, 0, ACK_FLAG);
             outgoing_packet = create_packet(incoming_packet.data, outgoing_header);
@@ -219,7 +215,7 @@ void rrecv( unsigned short int udp_port,
     printf("%d START\n", packet_queue->size);
     
     //check if ANY enqueued data can be written and write it
-            while(peak(packet_queue) <= expected_sequence) {
+            while(peak(packet_queue!=-1) && (packet_queue) <= expected_sequence) {
                 printf("PEAKING AT QUEUE\n");
                 if (peak(packet_queue) < expected_sequence){
                     //ensure we never write the same packet twice ()
@@ -276,7 +272,7 @@ int main(int argc, char** argv) {
 
 //     while(true){
 //     int peak_val = peak(pq);
-//     printf("PEAK: %d", peak_val);
+//     printf("PEAK: %d\n", peak_val);
 //     if (peak_val != -1){
 //         dequeue(pq);
 //     } else {

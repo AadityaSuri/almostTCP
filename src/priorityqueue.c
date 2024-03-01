@@ -48,16 +48,12 @@ void heapify(PriorityQueue* priority_queue, int root){
     int left = 2 * root + 1;
     int right = 2 * root + 2;
 
-    if (left < priority_queue->size){
-        if (priority_queue->heap[left].priority < priority_queue->heap[smallest].priority) {
-            smallest = left;
-        }
+    if (left < priority_queue->size && priority_queue->heap[left].priority < priority_queue->heap[smallest].priority){
+        smallest = left;
     }
 
-    if (right < priority_queue->size) {
-        if (priority_queue->heap[right].priority < priority_queue->heap[smallest].priority){
-            smallest = right;
-        }
+    if (right < priority_queue->size && priority_queue->heap[right].priority < priority_queue->heap[smallest].priority) {
+        smallest = right;
     }
 
     if (smallest != root) {
@@ -92,8 +88,7 @@ int enqueue(PriorityQueue* priority_queue, int priority, char* data, size_t data
     }
 
     int i = priority_queue->size;
-    priority_queue->size = priority_queue->size + 1;
-
+    priority_queue->size+=1;
     priority_queue->heap[i] = node_to_enqueue;
 
 
@@ -117,11 +112,6 @@ QueueNode dequeue(PriorityQueue* priority_queue){
     if (priority_queue->size == 0){
         fprintf(stderr, "ERROR: Dequeue from empty priority queue\n");
         exit(EXIT_FAILURE);
-    }
-
-    if (priority_queue->size == 1){
-        priority_queue->size--;
-        return priority_queue->heap[0];
     }
 
     QueueNode root = priority_queue->heap[0];
