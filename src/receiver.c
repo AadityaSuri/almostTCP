@@ -185,11 +185,17 @@ void rrecv( unsigned short int udp_port,
 
             }
             //check if ANY enqueued data can be written and write it
-            while(peak(packet_queue) == expected_sequence) {
+            while(peak(packet_queue) <= expected_sequence) {
                 printf("PEAKING AT QUEUE\n");
+                if (peak(packet_queue) < expected_sequence){
+                    //ensure we never write the same packet twice ()
+                    QueueNode dequeued_node = dequeue(packet_queue);
+                    continue;
+                }
                 QueueNode dequeued_node = dequeue(packet_queue);
                 printf("WRITING QUEUED  packet with seq_num: %d\n", dequeued_node.priority);
                 total_bytes_written += writeWithRate(dequeued_node.data, sizeof(dequeued_node.data), write_rate, total_bytes_written, start_time, outfile);
+                expected_sequence += 1;
             }
 
             outgoing_header = create_header(0, ack_number, 0, ACK_FLAG);
@@ -200,7 +206,6 @@ void rrecv( unsigned short int udp_port,
                 exit(EXIT_FAILURE);
             }
             printf("SENT ACK with ack_number: %d\n", ack_number);
-            //TODO: handle errors when ack packet not sent correctly
         }
         
     }
