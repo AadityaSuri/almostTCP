@@ -191,7 +191,7 @@ void rrecv( unsigned short int udp_port,
             }
             //check if ANY enqueued data can be written and write it
             while(peak(packet_queue) <= expected_sequence) {
-                printf("PEAKING AT QUEUE\n");
+                printf("PEAKING AT QUEUE peek: %d\n", peak(packet_queue));
                 if (peak(packet_queue) < expected_sequence){
                     //ensure we never write the same packet twice ()
                     QueueNode dequeued_node = dequeue(packet_queue);
@@ -218,13 +218,19 @@ void rrecv( unsigned short int udp_port,
 
     printf("%d START\n", packet_queue->size);
     
-    printf("%d\n", peak(packet_queue));
-    while(peak(packet_queue) == expected_sequence) {
-        printf("PEAKING AT QUEUE\n");
-        QueueNode dequeued_node = dequeue(packet_queue);
-        printf("WRITING QUEUED  packet with seq_num: %d\n", dequeued_node.priority);
-        total_bytes_written += writeWithRate(dequeued_node.data, sizeof(dequeued_node.data), write_rate, total_bytes_written, start_time, outfile);
-    }
+    //check if ANY enqueued data can be written and write it
+            while(peak(packet_queue) <= expected_sequence) {
+                printf("PEAKING AT QUEUE\n");
+                if (peak(packet_queue) < expected_sequence){
+                    //ensure we never write the same packet twice ()
+                    QueueNode dequeued_node = dequeue(packet_queue);
+                    continue;
+                }
+                QueueNode dequeued_node = dequeue(packet_queue);
+                printf("WRITING QUEUED  packet with seq_num: %d\n", dequeued_node.priority);
+                total_bytes_written += writeWithRate(dequeued_node.data, sizeof(dequeued_node.data), write_rate, total_bytes_written, start_time, outfile);
+                expected_sequence += 1;
+            }
 
     printf("%d END\n", packet_queue->size);
 

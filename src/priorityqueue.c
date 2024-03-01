@@ -81,16 +81,21 @@ int enqueue(PriorityQueue* priority_queue, int priority, char* data){
         return -1;
     }
 
-    int i = priority_queue->size + 1;
-    priority_queue->size = priority_queue->size + 1;
+    QueueNode node_to_enqueue;
 
-    priority_queue->heap[i].priority = priority;
+    node_to_enqueue.priority = priority;
 
     if (data){
         for (size_t n = 0; n < sizeof(data); n++) {
-            priority_queue->heap[i].data[n] = data[n];
+            node_to_enqueue.data[n] = data[n];
         }
     }
+
+    int i = priority_queue->size + 1;
+    priority_queue->size = priority_queue->size + 1;
+
+    priority_queue->heap[i] = node_to_enqueue;
+
 
     while(i !=0 && priority_queue->heap[(i-1)/2].priority > priority_queue->heap[i].priority) {
         swapQueueNodes(&priority_queue->heap[i], &priority_queue->heap[(i-1)/2]);

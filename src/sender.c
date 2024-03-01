@@ -193,8 +193,8 @@ void rsend(char* hostname,
             }
           }
         }
-
       }
+    }
   }
 
   printf("%d packets sent\n", seq_num);
