@@ -78,6 +78,7 @@ int enqueue(PriorityQueue* priority_queue, int priority, char* data, size_t data
     }
 
     QueueNode node_to_enqueue;
+    node_to_enqueue.data_len = data_len;
 
     node_to_enqueue.priority = priority;
 

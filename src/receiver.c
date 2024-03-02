@@ -54,6 +54,8 @@ size_t writeWithRate(char data[], int data_len, unsigned long long int write_rat
         //     // printf("%c", data[i]);
         // }
         bytes_written = fwrite(data, sizeof(char), data_len, outfile);
+        fflush(outfile);
+
         //TODO: handle error if bytes written is not correct value
         return bytes_written;
     }
@@ -147,6 +149,8 @@ void rrecv( unsigned short int udp_port,
             perror("recvfrom");
             exit(EXIT_FAILURE);
         } 
+        ack_number = incoming_packet.header.seq_num;
+
 
         printf("RECEIVED PACKET with seq_num: %d\n", incoming_packet.header.seq_num);
 
@@ -164,18 +168,16 @@ void rrecv( unsigned short int udp_port,
             elapsed_time += (double) (toc.tv_usec - tic.tv_usec) / 1000.0;
             printf("elapsed time: %.3f\n", elapsed_time);
 
-            // connection_open = false;
-            // break;        
+            connection_open = false;
+            break;        
         }
         else {
             if(incoming_packet.header.seq_num < expected_sequence){
                 //TODO: discard packet
                 printf("DISCARDING  packet with seq_num: %d\n", incoming_packet.header.seq_num);
-                ack_number = incoming_packet.header.seq_num;
-                memset(&incoming_packet, 0, sizeof(incoming_packet));
+                // memset(&incoming_packet, 0, sizeof(incoming_packet));
                 // continue;
             } else if (incoming_packet.header.seq_num > expected_sequence) {
-                ack_number = incoming_packet.header.seq_num;
                 //enqueue packet with priority seq_num to be written later
                 printf("%d %d\n", ack_number, expected_sequence);
                 printf("ENQUEUING  packet with seq_num: %d\n", incoming_packet.header.seq_num);
@@ -184,7 +186,6 @@ void rrecv( unsigned short int udp_port,
                 //write packet
                 printf("WRITING packet with seq_num: %d\n", incoming_packet.header.seq_num);
                 total_bytes_written += writeWithRate(incoming_packet.data, incoming_packet.header.length, write_rate, total_bytes_written, start_time, outfile);
-                ack_number = expected_sequence;
                 expected_sequence+=1;
 
             }
@@ -198,12 +199,12 @@ void rrecv( unsigned short int udp_port,
                 }
                 QueueNode dequeued_node = dequeue(packet_queue);
                 printf("WRITING QUEUED  packet with seq_num: %d\n", dequeued_node.priority);
-                total_bytes_written += writeWithRate(dequeued_node.data, sizeof(dequeued_node.data), write_rate, total_bytes_written, start_time, outfile);
+                total_bytes_written += writeWithRate(dequeued_node.data, dequeued_node.data_len, write_rate, total_bytes_written, start_time, outfile);
                 expected_sequence += 1;
             }
 
-            outgoing_header = create_header(0, ack_number, 0, ACK_FLAG);
-            outgoing_packet = create_packet(incoming_packet.data, outgoing_header);
+            outgoing_header = create_header(0, ack_number, incoming_packet.header.length, ACK_FLAG);
+            outgoing_packet = create_packet(NULL, outgoing_header);
             send_len = sendto(sock_fd, &outgoing_packet, sizeof(outgoing_packet), 0, (const struct sock_addr*) &client_addr, len);
             if (send_len < 0) {
                 fprintf(stderr, "Ack send failed: %d\n", send_len);
@@ -211,9 +212,10 @@ void rrecv( unsigned short int udp_port,
             }
             printf("SENT ACK with ack_number: %d\n", ack_number);
         }
+        printf("%d START\n", packet_queue->size);
     }
 
-    printf("%d START\n", packet_queue->size);
+    
 
 
     
@@ -255,32 +257,5 @@ int main(int argc, char** argv) {
 
     rrecv(udp_port, destination_file, write_rate);
 
-//     PriorityQueue* pq = createPriorityQueue();
 
-
-//     header_t t1 = create_header(1,0,0,0);
-//     header_t t2 = create_header(2,0,0,0);
-//     header_t t3 = create_header(3,0,0,0);
-//     header_t t4 = create_header(4,0,0,0);
-
-//     packet_t p1 = create_packet(NULL, t1);
-//     packet_t p2 = create_packet(NULL, t2);
-//     packet_t p3 = create_packet(NULL, t3);
-//     packet_t p4 = create_packet(NULL, t4);
-
-//     enqueue(pq, p4.header.seq_num, NULL, 0);
-//     enqueue(pq, p2.header.seq_num, NULL, 0);
-//     enqueue(pq, p1.header.seq_num, NULL, 0);
-//     enqueue(pq, p3.header.seq_num, NULL, 0);
-
-//     while(true){
-//     int peak_val = peak(pq);
-//     printf("PEAK: %d\n", peak_val);
-//     if (peak_val != -1){
-//         dequeue(pq);
-//     } else {
-//         break;
-//     }
-
-// }
 }
