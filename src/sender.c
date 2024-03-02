@@ -33,7 +33,7 @@
 #include "packet.h"
 
 #define ACK_TIMEOUT 150 // Timeout for ACKs in milliseconds.
-#define FIN_ACK_WAIT 100 // Time to wait for FIN ACKs in microseconds.
+#define FIN_ACK_WAIT 1000 // Time to wait for FIN ACKs in microseconds.
 
 #define min(a, b) ((b) > (a) ? (a) : (b)) // Helper function to find the minimum of two values.
 
