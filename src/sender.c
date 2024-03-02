@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #include <pthread.h>
@@ -31,7 +32,7 @@
 
 #include "packet.h"
 
-#define ACK_TIMEOUT 75 // Timeout for ACKs in milliseconds.
+#define ACK_TIMEOUT 150 // Timeout for ACKs in milliseconds.
 
 #define min(a, b) ((b) > (a) ? (a) : (b)) // Helper function to find the minimum of two values.
 
@@ -119,7 +120,7 @@ void rsend(char* hostname,
   memset(packets, 0, sizeof(packet_t) * bytes_to_transfer);
   int packet_index = 0;
 
-  int last_packet_acked = -1;
+  int last_packet_acked = 10000;
 
   size_t total_bytes_read = 0;
 
@@ -183,6 +184,7 @@ void rsend(char* hostname,
       // if (IS_ACK(ack_packet.header.flags)){
       printf("RECEIVED ACK with ack_number: %d\n", ack_packet.header.ack_num);
       packets[ack_packet.header.ack_num].acked = true;
+      // last_packet_acked = min(last_packet_acked, ack_packet.header.ack_num);
       // last_packet_acked = ack_packet.header.ack_num;
       total_bytes_acked += ack_packet.header.length;
       // }
@@ -196,6 +198,9 @@ void rsend(char* hostname,
         if (!packets[i].acked) {
           packet_t retransmit_packet = packets[i].packet;
           int send_len = sendto(sock_fd, &retransmit_packet, sizeof(packet_t), 0, (const struct sockaddr*) &server_addr,  len);
+          // if (!(i % 200)) {
+          //   usleep(100);
+          // }
           printf("PACKET RETRANSMITTED with seq_num: %d\n", retransmit_packet.header.seq_num);
           if (send_len < 0) {
             fprintf(stderr, "Send failed: %d\n", send_len);
