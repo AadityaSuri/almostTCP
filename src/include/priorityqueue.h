@@ -60,6 +60,7 @@ void heapify(PriorityQueue* priority_queue, int root);
  * @param priority_queue The priority queue.
  * @param priority The priority of the element to enqueue.
  * @param data The data associated with the element.
+ * @param data_len The length of the data array
  * @return -1 if the queue is full, otherwise 0.
  */
 int enqueue(PriorityQueue* priority_queue, int priority, char* data, size_t data_len);
