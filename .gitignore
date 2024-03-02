@@ -7,4 +7,6 @@ obj/*
 bpoints*
 *.txt
 *.jpeg
+*.svg
+*.png
 .idea/
