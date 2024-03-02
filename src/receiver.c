@@ -54,6 +54,8 @@ size_t writeWithRate(char data[], int data_len, unsigned long long int write_rat
         //     // printf("%c", data[i]);
         // }
         bytes_written = fwrite(data, sizeof(char), data_len, outfile);
+        fflush(outfile);
+
         //TODO: handle error if bytes written is not correct value
         return bytes_written;
     }
@@ -140,13 +142,17 @@ void rrecv( unsigned short int udp_port,
 
     struct timeval tic, toc;
 
-    while(connection_open){ 
+    while(connection_open) {
 
         recv_len = recvfrom(sock_fd, &incoming_packet, sizeof(incoming_packet), 0, (const struct sock_addr*) &client_addr, &len);
         if (recv_len == -1) {
             perror("recvfrom");
             exit(EXIT_FAILURE);
         } 
+        ack_number = incoming_packet.header.seq_num;
+
+
+        printf("RECEIVED PACKET with seq_num: %d\n", incoming_packet.header.seq_num);
 
         //debugging
         if (!first_packet_received) {
@@ -169,37 +175,36 @@ void rrecv( unsigned short int udp_port,
             if(incoming_packet.header.seq_num < expected_sequence){
                 //TODO: discard packet
                 printf("DISCARDING  packet with seq_num: %d\n", incoming_packet.header.seq_num);
-                memset(&incoming_packet, 0, sizeof(incoming_packet));
-                continue;
+                // memset(&incoming_packet, 0, sizeof(incoming_packet));
+                // continue;
             } else if (incoming_packet.header.seq_num > expected_sequence) {
-                ack_number = incoming_packet.header.seq_num;
                 //enqueue packet with priority seq_num to be written later
+                printf("%d %d\n", ack_number, expected_sequence);
                 printf("ENQUEUING  packet with seq_num: %d\n", incoming_packet.header.seq_num);
-                enqueue(packet_queue, incoming_packet.header.seq_num, incoming_packet.data);
+                enqueue(packet_queue, incoming_packet.header.seq_num, incoming_packet.data, incoming_packet.header.length);
             } else {
                 //write packet
                 printf("WRITING packet with seq_num: %d\n", incoming_packet.header.seq_num);
                 total_bytes_written += writeWithRate(incoming_packet.data, incoming_packet.header.length, write_rate, total_bytes_written, start_time, outfile);
-                ack_number = expected_sequence;
                 expected_sequence+=1;
 
             }
             //check if ANY enqueued data can be written and write it
-            while(peak(packet_queue) <= expected_sequence) {
-                printf("PEAKING AT QUEUE\n");
+            while(peak(packet_queue) <= expected_sequence && peak(packet_queue)!=-1) {
+                printf("PEAKING AT QUEUE peek: %d\n", peak(packet_queue));
                 if (peak(packet_queue) < expected_sequence){
-                    //ensure we never write the same packet twice ()
+                    //ensure we never write the same packet twice
                     QueueNode dequeued_node = dequeue(packet_queue);
                     continue;
                 }
                 QueueNode dequeued_node = dequeue(packet_queue);
                 printf("WRITING QUEUED  packet with seq_num: %d\n", dequeued_node.priority);
-                total_bytes_written += writeWithRate(dequeued_node.data, sizeof(dequeued_node.data), write_rate, total_bytes_written, start_time, outfile);
+                total_bytes_written += writeWithRate(dequeued_node.data, dequeued_node.data_len, write_rate, total_bytes_written, start_time, outfile);
                 expected_sequence += 1;
             }
 
-            outgoing_header = create_header(0, ack_number, 0, ACK_FLAG);
-            outgoing_packet = create_packet(incoming_packet.data, outgoing_header);
+            outgoing_header = create_header(0, ack_number, incoming_packet.header.length, ACK_FLAG);
+            outgoing_packet = create_packet(NULL, outgoing_header);
             send_len = sendto(sock_fd, &outgoing_packet, sizeof(outgoing_packet), 0, (const struct sock_addr*) &client_addr, len);
             if (send_len < 0) {
                 fprintf(stderr, "Ack send failed: %d\n", send_len);
@@ -207,8 +212,28 @@ void rrecv( unsigned short int udp_port,
             }
             printf("SENT ACK with ack_number: %d\n", ack_number);
         }
-        
+        printf("%d START\n", packet_queue->size);
     }
+
+    
+
+
+    
+    //check if ANY enqueued data can be written and write it
+            // while(peak(packet_queue!=-1) && (packet_queue) <= expected_sequence) {
+            //     printf("PEAKING AT QUEUE\n");
+            //     if (peak(packet_queue) < expected_sequence){
+            //         //ensure we never write the same packet twice ()
+            //         QueueNode dequeued_node = dequeue(packet_queue);
+            //         continue;
+            //     }
+            //     QueueNode dequeued_node = dequeue(packet_queue);
+            //     printf("WRITING QUEUED  packet with seq_num: %d\n", dequeued_node.priority);
+            //     total_bytes_written += writeWithRate(dequeued_node.data, sizeof(dequeued_node.data), write_rate, total_bytes_written, start_time, outfile);
+            //     expected_sequence += 1;
+            // }
+
+    printf("%d END\n", packet_queue->size);
 
     fclose(outfile);
     exit(EXIT_SUCCESS);
@@ -231,4 +256,6 @@ int main(int argc, char** argv) {
     write_rate = (unsigned long long int) atoi(argv[3]);
 
     rrecv(udp_port, destination_file, write_rate);
+
+
 }

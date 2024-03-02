@@ -10,7 +10,7 @@
 
 #include "packet.h"
 
-#define MAX_QUEUE_SIZE 100 /**< Maximum size of the priority queue. */
+#define MAX_QUEUE_SIZE 10000 /**< Maximum size of the priority queue. */
 
 /**
  * @struct QueueNode
@@ -18,7 +18,8 @@
  */
 typedef struct {
     int priority;
-    char data[PAYLOAD_SZ]; 
+    size_t data_len;
+    char data[PAYLOAD_SZ];
 } QueueNode;
 
 /**
@@ -61,7 +62,7 @@ void heapify(PriorityQueue* priority_queue, int root);
  * @param data The data associated with the element.
  * @return -1 if the queue is full, otherwise 0.
  */
-int enqueue(PriorityQueue* priority_queue, int priority, char* data);
+int enqueue(PriorityQueue* priority_queue, int priority, char* data, size_t data_len);
 
 /**
  * @brief Dequeues the element with the highest priority from the priority queue.
