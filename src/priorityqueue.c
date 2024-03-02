@@ -66,9 +66,10 @@ void heapify(PriorityQueue* priority_queue, int root){
 /**
  * @brief Enqueues a new element with the given priority into the priority queue.
  * 
- * @param priority_queue The priority queue.
+ * @param priority_queue Pointer to the priority queue.
  * @param priority The priority of the element to enqueue.
  * @param data The data associated with the element.
+ * @param data_len The length of the data array.
  * @return -1 if the queue is full, otherwise 0.
  */
 
@@ -103,7 +104,7 @@ int enqueue(PriorityQueue* priority_queue, int priority, char* data, size_t data
 }
 
 /**
- * @brief Dequeues the element with the highest priority from the priority queue.
+ * @brief Dequeues the element with the highest priority (lowest sequence number) from the priority queue.
  * 
  * @param priority_queue The priority queue.
  * @return The dequeued node.
