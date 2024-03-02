@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# This script tests the receiver and sender programs with no bandwidth limit and no packet drop.
+# It sends a file of 100 MB to a receiver and verifies that the receiver receives the file correctly.
+
+# Set the file size to 100 MB
+FILE_SIZE=10000
+PORT = 8080
+FILE_NAME = "testfile.txt"
+

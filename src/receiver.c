@@ -47,12 +47,6 @@ size_t writeWithRate(char data[], int data_len, unsigned long long int write_rat
     time(&current_time);
 
     if (write_rate == 0) {
-        // for (size_t i = 0; i < data_len; i++){
-        //     // printf("%c", data[i]);
-        //     bytes_written += fprintf(outfile, "%c", data[i]);\
-
-        //     // printf("%c", data[i]);
-        // }
         bytes_written = fwrite(data, sizeof(char), data_len, outfile);
         fflush(outfile);
 
@@ -167,6 +161,12 @@ void rrecv( unsigned short int udp_port,
             double elapsed_time = (double) (toc.tv_sec - tic.tv_sec) * 1000.0;
             elapsed_time += (double) (toc.tv_usec - tic.tv_usec) / 1000.0;
             printf("elapsed time: %.3f\n", elapsed_time);
+
+            // send fin ack
+            packet_t fin_ack_packet;
+            fin_ack_packet = create_packet(NULL, create_header(0, 0, -1, FIN_FLAG));
+            sendto(sock_fd, &fin_ack_packet, sizeof(packet_t), 0, (const struct sockaddr*) &client_addr, len);
+            printf("SENT FIN ACK\n");
 
             connection_open = false;
             break;        
