@@ -127,17 +127,15 @@ void rsend(char* hostname,
   while(total_bytes_acked < bytes_to_transfer)   {
 
     unsigned char buffer[PAYLOAD_SZ];
-    // size_t bytes_read_in_for_loop = 0;
     
     memset(buffer, 0, PAYLOAD_SZ);
     if (total_bytes_read < bytes_to_transfer) {
-    // size_t bytes_to_read_from_file = min(PAYLOAD_SZ, bytes_to_transfer - total_bytes_acked);
-    size_t bytes_read_from_file = fread(buffer, sizeof(unsigned char), PAYLOAD_SZ, input_file);
-    total_bytes_read += bytes_read_from_file; 
-    printf("READING %d bytes\n", bytes_read_from_file);
+      size_t bytes_read_from_file = fread(buffer, sizeof(unsigned char), PAYLOAD_SZ, input_file);
+      total_bytes_read += bytes_read_from_file; 
+      printf("READING %d bytes\n", bytes_read_from_file);
 
     
-        //create a packet with the data and header
+      //create a packet with the data and header
       packet_t packet = create_packet(buffer, 
           create_header(seq_num, 0, bytes_read_from_file, 0));
 
@@ -159,10 +157,6 @@ void rsend(char* hostname,
     }
 
 
-    // if (bytes_read_from_file < PAYLOAD_SZ){
-    //     break;
-    // }
-
     FD_ZERO(&readfds);
     FD_SET(sock_fd, &readfds);
     tv.tv_sec = ACK_TIMEOUT / 2000;
@@ -181,19 +175,14 @@ void rsend(char* hostname,
       recvfrom(sock_fd, &ack_packet, sizeof(packet_t), 
           0, (const struct sockaddr*) &server_addr, &len);
 
-      // if (IS_ACK(ack_packet.header.flags)){
       printf("RECEIVED ACK with ack_number: %d\n", ack_packet.header.ack_num);
       packets[ack_packet.header.ack_num].acked = true;
-      // last_packet_acked = min(last_packet_acked, ack_packet.header.ack_num);
-      // last_packet_acked = ack_packet.header.ack_num;
       total_bytes_acked += ack_packet.header.length;
-      // }
-
+ 
     } else {
 
       // if the select call timed out, retransmit any packets that have not been acked
       printf("TIMEOUT\n");
-      // printf("LAST PACKET ACKED: %d\n", last_packet_acked);
       for (size_t i = 0 ; i < packet_index; i++) {
         if (!packets[i].acked) {
           packet_t retransmit_packet = packets[i].packet;
