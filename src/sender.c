@@ -125,76 +125,75 @@ void rsend(char* hostname,
     unsigned char buffer[PAYLOAD_SZ];
     size_t bytes_read_in_for_loop = 0;
     
-    for (size_t i = 0; i < 10; i++) {
+    memset(buffer, 0, PAYLOAD_SZ);
+    size_t bytes_to_read_from_file = min(PAYLOAD_SZ, bytes_to_transfer - total_bytes_acked);
+    size_t bytes_read_from_file = fread(buffer, sizeof(unsigned char), bytes_to_read_from_file, input_file);
 
-      memset(buffer, 0, PAYLOAD_SZ);
-      size_t bytes_to_read_from_file = min(PAYLOAD_SZ, bytes_to_transfer - total_bytes_acked);
-      size_t bytes_read_from_file = fread(buffer, sizeof(unsigned char), bytes_to_read_from_file, input_file);
+    //create a packet with the data and header
+    packet_t packet = create_packet(buffer, 
+        create_header(seq_num, 0, bytes_read_from_file, 0));
 
-      //create a packet with the data and header
-      packet_t packet = create_packet(buffer, 
-          create_header(seq_num, 0, bytes_read_from_file, 0));
+    // add the packet to the array of packets
+    packets[seq_num].packet = packet;
+    packets[seq_num].acked = false;
+     
 
-      // add the packet to the array of packets
-      packets[seq_num].packet = packet;
-      packets[seq_num].acked = false;
-      seq_num++; 
-
-      // send the packet and check for errors
-      int send_len = sendto(sock_fd, &packet, sizeof(packet.header) + bytes_read_from_file,
-            0, (const struct sockaddr*) &server_addr,  len);
-      if (send_len < 0) {
-        fprintf(stderr, "Send failed: %d\n", send_len);
-        exit(EXIT_FAILURE);
-      }
-        
-      printf("SENT PACKET with seq_num: %d\n", packet.header.seq_num);
-      // packet_index++;
-
-
-      FD_ZERO(&readfds);
-      FD_SET(sock_fd, &readfds);
-      tv.tv_sec = ACK_TIMEOUT / 2000;
-      tv.tv_usec = (ACK_TIMEOUT % 2000) * 1000;
-
-      select_retval = select(sock_fd + 1, &readfds, NULL, NULL, &tv);
+    // send the packet and check for errors
+    int send_len = sendto(sock_fd, &packet, sizeof(packet.header) + bytes_read_from_file,
+          0, (const struct sockaddr*) &server_addr,  len);
+    if (send_len < 0) {
+      fprintf(stderr, "Send failed: %d\n", send_len);
+      exit(EXIT_FAILURE);
+    }
       
-      if (select_retval == -1) {
-        fprintf(stderr, "Select failed: %d\n", select_retval);
-        exit(EXIT_FAILURE);
+    printf("SENT PACKET with seq_num: %d\n", packet.header.seq_num);
+    seq_num++;
+    // packet_index++;
 
-      } else if (select_retval) {
 
-        // if the select call returned, check if any packets have been acked and increment the total bytes acked
-        packet_t ack_packet;
-        recvfrom(sock_fd, &ack_packet, sizeof(ack_packet), 
-            0, (const struct sockaddr*) &server_addr, &len);
+    FD_ZERO(&readfds);
+    FD_SET(sock_fd, &readfds);
+    tv.tv_sec = ACK_TIMEOUT / 2000;
+    tv.tv_usec = (ACK_TIMEOUT % 2000) * 1000;
 
-        if (IS_ACK(ack_packet.header.flags)){
-          printf("RECEIVED ACK with ack_number: %d\n", ack_packet.header.ack_num);
-          packets[ack_packet.header.ack_num].acked = true;
-          last_packet_acked = ack_packet.header.ack_num;
-          total_bytes_acked += bytes_read_from_file;
-        }
+    select_retval = select(sock_fd + 1, &readfds, NULL, NULL, &tv);
+    
+    if (select_retval == -1) {
+      fprintf(stderr, "Select failed: %d\n", select_retval);
+      exit(EXIT_FAILURE);
 
-      } else {
+    } else if (select_retval) {
 
-        // if the select call timed out, retransmit any packets that have not been acked
-        printf("TIMEOUT\n");
-        printf("LAST PACKET ACKED: %d\n", last_packet_acked);
-        for (size_t i = last_packet_acked + 1; i < seq_num; i++) {
-          if (!packets[i].acked) {
-            packet_t packet = packets[i].packet;
-            int send_len = sendto(sock_fd, &packet, sizeof(packet), 0, (const struct sockaddr*) &server_addr,  len);
-            printf("PACKET RETRANSMITTED with seq_num: %d\n", packet.header.seq_num);
-            if (send_len < 0) {
-              fprintf(stderr, "Send failed: %d\n", send_len);
-              exit(EXIT_FAILURE);
-            }
+      // if the select call returned, check if any packets have been acked and increment the total bytes acked
+      packet_t ack_packet;
+      recvfrom(sock_fd, &ack_packet, sizeof(ack_packet), 
+          0, (const struct sockaddr*) &server_addr, &len);
+
+      if (IS_ACK(ack_packet.header.flags)){
+        printf("RECEIVED ACK with ack_number: %d\n", ack_packet.header.ack_num);
+        packets[ack_packet.header.ack_num].acked = true;
+        last_packet_acked = ack_packet.header.ack_num;
+        total_bytes_acked += bytes_read_from_file;
+      }
+
+    } else {
+
+      // if the select call timed out, retransmit any packets that have not been acked
+      printf("TIMEOUT\n");
+      printf("LAST PACKET ACKED: %d\n", last_packet_acked);
+      for (size_t i = 0 ; i < seq_num; i++) {
+        if (!packets[i].acked) {
+          packet_t packet = packets[i].packet;
+          int send_len = sendto(sock_fd, &packet, sizeof(packet), 0, (const struct sockaddr*) &server_addr,  len);
+          printf("PACKET RETRANSMITTED with seq_num: %d\n", packet.header.seq_num);
+          if (send_len < 0) {
+            fprintf(stderr, "Send failed: %d\n", send_len);
+            exit(EXIT_FAILURE);
           }
         }
       }
     }
+  
   }
 
   printf("%d packets sent\n", seq_num);
