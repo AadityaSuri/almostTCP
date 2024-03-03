@@ -134,26 +134,53 @@ void rrecv(unsigned short int udp_port,
 
     int len = sizeof(client_addr);
 
-    while (connection_open)
+    struct timeval tic, toc;
+    bool first_packet_received = false;
+
+
+    printf("Started listening on port %d\n", udp_port);
+
+    memset(&incoming_packet, 0, sizeof(incoming_packet));
+    while (!(IS_FIN(incoming_packet.header.flags && IS_ACK(incoming_packet.header.flags))))
     {
 
         recv_len = recvfrom(sock_fd, &incoming_packet, sizeof(incoming_packet), 0, (const struct sock_addr *)&client_addr, &len);
         if (recv_len == -1)
         {
+            if (errno == EAGAIN) {
+                printf("TIMEOUT\n");
+                break;
+            }
             fprintf(stderr, "Receive failed: %d\n", recv_len);
-            exit(EXIT_FAILURE);
+            close(sock_fd);
         }
         ack_number = incoming_packet.header.seq_num;
 
-        if (IS_FIN(incoming_packet.header.flags))
-        {
+        if (!first_packet_received) {
+            gettimeofday(&tic, NULL);
+            first_packet_received = true;
+            struct timeval timeout;
+            timeout.tv_sec = 10;
+            timeout.tv_usec = 0;
+            setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
+        }
 
+        if (IS_FIN(incoming_packet.header.flags))
+        {   
             // send fin ack
+            printf("Received FIN\n");
+
             packet_t fin_ack_packet;
-            fin_ack_packet = create_packet(NULL, create_header(0, 0, -1, FIN_FLAG));
+            fin_ack_packet = create_packet(NULL, create_header(0, 0, -1, FIN_FLAG | ACK_FLAG));
             sendto(sock_fd, &fin_ack_packet, sizeof(packet_t), 0, (const struct sockaddr *)&client_addr, len);
-            connection_open = false;
+            // connection_open = false;
+            
+            gettimeofday(&toc, NULL);
+            double elapsed_time = (double) (toc.tv_sec - tic.tv_sec) * 1000.0 + 
+                                     (double) (toc.tv_usec - tic.tv_usec) / 1000.0;
+            printf("Elapsed time: %.3f ms\n", elapsed_time);
             break;
+
         }
         else
         {
@@ -197,7 +224,11 @@ void rrecv(unsigned short int udp_port,
             }
         }
     }
+    printf("connection closed\n");
+
     fclose(outfile);
+
+    close(sock_fd);
     exit(EXIT_SUCCESS);
 }
 

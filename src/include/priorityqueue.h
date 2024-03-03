@@ -10,7 +10,7 @@
 
 #include "packet.h"
 
-#define MAX_QUEUE_SIZE 10000 /**< Maximum size of the priority queue. */
+#define MAX_QUEUE_SIZE 1000000 /**< Maximum size of the priority queue. */
 
 /**
  * @struct QueueNode
