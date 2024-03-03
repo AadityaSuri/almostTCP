@@ -5,8 +5,6 @@ sender
 receiver
 obj/*
 bpoints*
-*.txt
-*.jpeg
-*.svg
-*.png
+output.txt
+image_output.jpeg   
 .idea/
