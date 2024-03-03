@@ -35,7 +35,7 @@ NC='\033[0m' # No Color
 file_size=$(wc -c <"$file_name")
 comparison_bytes=$(($bytes_to_transfer < $file_size ? $bytes_to_transfer : $file_size))
 
-# Use cmp to compare the first 'comparison_bytes' bytes of the files
+# compare the first 'comparison_bytes' bytes of the files
 if cmp -n $comparison_bytes "$file_name" "$out_file_name"; then
   echo -e "${GREEN}The first $comparison_bytes bytes of the files are identical. Test passed.${NC}"
 else

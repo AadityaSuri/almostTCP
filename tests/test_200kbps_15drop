@@ -27,19 +27,19 @@ echo "Testing with file size of $bytes_to_transfer bytes"
 
 # run the receiver
 ./receiver $port $out_file_name 0 &
-# ./receiver $port $out_file_name 0 &
+
 sleep 1
 # run the sender
 ./sender $address $port $file_name $bytes_to_transfer
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 file_size=$(wc -c <"$file_name")
 comparison_bytes=$(($bytes_to_transfer < $file_size ? $bytes_to_transfer : $file_size))
 
-# Use cmp to compare the first 'comparison_bytes' bytes of the files
+# compare the first 'comparison_bytes' bytes of the files
 if cmp -n $comparison_bytes "$file_name" "$out_file_name"; then
   echo -e "${GREEN}The first $comparison_bytes bytes of the files are identical. Test passed.${NC}"
 else

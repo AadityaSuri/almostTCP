@@ -12,8 +12,8 @@ sudo tc qdisc add dev lo parent 1:12 netem loss 15%
 
 echo "Limited bandwidth to 200 kbytes/sec and 15% packet loss"
 
-MIN=200000
-MAX=2000000
+MIN=200
+MAX=15000
 
 address="localhost"
 port=4040
@@ -26,7 +26,7 @@ echo "Testing with file size of $bytes_to_transfer bytes"
 
 # run the receiver
 ./receiver $port $out_file_name 0 &
-# ./receiver $port $out_file_name 0 &
+
 sleep 1
 # run the sender
 ./sender $address $port $file_name $bytes_to_transfer
@@ -44,7 +44,7 @@ NC='\033[0m' # No Color
 file_size=$(wc -c <"$file_name")
 comparison_bytes=$(($bytes_to_transfer < $file_size ? $bytes_to_transfer : $file_size))
 
-# Use cmp to compare the first 'comparison_bytes' bytes of the files
+# compare the first 'comparison_bytes' bytes of the files
 if cmp -n $comparison_bytes "$file_name" "$out_file_name"; then
   echo -e "${GREEN}The first $comparison_bytes bytes of the files are identical. Test passed.${NC}"
 else
