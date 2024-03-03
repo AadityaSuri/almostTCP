@@ -207,7 +207,6 @@ void rsend(char* hostname,
         create_header(0,0,-1, FIN_FLAG));
     sendto(sock_fd, &fin_packet, sizeof(packet_t), 0,
       (const struct sockaddr*) &server_addr,  len);
-    printf("SENT FIN\n");
 
     usleep(FIN_ACK_WAIT);
     

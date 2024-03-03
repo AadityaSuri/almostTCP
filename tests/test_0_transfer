@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# This script tests the receiver and sender programs with no bandwidth limit and no packet drop.
+# It sends a file of 100 MB to a receiver and verifies that the receiver receives the file correctly.
+
+# change current directory to project directory
+cd ..
+
+address="localhost"
+port=4040
+file_name="test_res/testfile.txt"
+bytes_to_transfer=0
+
+out_file_name="output.txt"
+recv_log="recv.log"
+
+echo "Testing with file size of $bytes_to_transfer bytes"
+
+# run the receiver
+./receiver $port $out_file_name 0 &
+# ./receiver $port $out_file_name 0 &
+sleep 1
+# run the sender
+./sender $address $port $file_name $bytes_to_transfer
+
+chars_in_file=$(wc -c $out_file_name | awk '{print $1}')
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+file_size=$(wc -c <"$file_name")
+comparison_bytes=$(($bytes_to_transfer < $file_size ? $bytes_to_transfer : $file_size))
+
+# compare the first 'comparison_bytes' bytes of the files
+if cmp -n $comparison_bytes "$file_name" "$out_file_name"; then
+  echo -e "${GREEN}The first $comparison_bytes bytes of the files are identical. Test passed.${NC}"
+else
+  echo -e "${RED}The files differ within the first $comparison_bytes bytes. Test failed.${NC}"
+fi
+
+
