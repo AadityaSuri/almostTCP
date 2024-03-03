@@ -6,5 +6,5 @@ receiver
 obj/*
 bpoints*
 output.txt
-image_output.jpeg   
+output_image.jpeg
 .idea/
