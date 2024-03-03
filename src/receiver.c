@@ -26,6 +26,8 @@
 #include "packet.h"
 #include "priorityqueue.h"
 
+#define RECEIVE_TIMEOUT 10 //Terminate the protocol after 10 seconds of inactivity in socket
+
 /**
  * @brief Writes data to a file with a specified rate.
  *
@@ -141,7 +143,7 @@ void rrecv(unsigned short int udp_port,
     printf("Started listening on port %d\n", udp_port);
 
     memset(&incoming_packet, 0, sizeof(incoming_packet));
-    while (!(IS_FIN(incoming_packet.header.flags && IS_ACK(incoming_packet.header.flags))))
+    while (!(IS_FIN(incoming_packet.header.flags)))
     {
 
         recv_len = recvfrom(sock_fd, &incoming_packet, sizeof(incoming_packet), 0, (const struct sock_addr *)&client_addr, &len);
@@ -151,8 +153,6 @@ void rrecv(unsigned short int udp_port,
                 printf("TIMEOUT\n");
                 break;
             }
-            fprintf(stderr, "Receive failed: %d\n", recv_len);
-            close(sock_fd);
         }
         ack_number = incoming_packet.header.seq_num;
 
@@ -160,7 +160,7 @@ void rrecv(unsigned short int udp_port,
             gettimeofday(&tic, NULL);
             first_packet_received = true;
             struct timeval timeout;
-            timeout.tv_sec = 10;
+            timeout.tv_sec = RECEIVE_TIMEOUT;
             timeout.tv_usec = 0;
             setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
         }
@@ -168,12 +168,10 @@ void rrecv(unsigned short int udp_port,
         if (IS_FIN(incoming_packet.header.flags))
         {   
             // send fin ack
-            printf("Received FIN\n");
-
             packet_t fin_ack_packet;
-            fin_ack_packet = create_packet(NULL, create_header(0, 0, -1, FIN_FLAG | ACK_FLAG));
+            fin_ack_packet = create_packet(NULL, 
+                create_header(0, 0, -1, FIN_FLAG | ACK_FLAG));
             sendto(sock_fd, &fin_ack_packet, sizeof(packet_t), 0, (const struct sockaddr *)&client_addr, len);
-            // connection_open = false;
             
             gettimeofday(&toc, NULL);
             double elapsed_time = (double) (toc.tv_sec - tic.tv_sec) * 1000.0 + 
@@ -224,8 +222,8 @@ void rrecv(unsigned short int udp_port,
             }
         }
     }
-    printf("connection closed\n");
-
+        
+    free(packet_queue);
     fclose(outfile);
 
     close(sock_fd);

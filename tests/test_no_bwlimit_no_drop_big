@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# This script tests the receiver and sender programs with no bandwidth limit and no packet drop.
+# It sends a file of 100 MB to a receiver and verifies that the receiver receives the file correctly.
+
+# change current directory to project directory
+cd ..
+
+MIN=150000
+MAX=1500000
+
+address="localhost"
+port=4040
+file_name="test_res/testfile.txt"
+bytes_to_transfer=$(awk -v min=$MIN -v max=$MAX 'BEGIN{srand(); print int(min+rand()*(max-min+1))}')
+
+out_file_name="output.txt"
+recv_log="recv.log"
+
+echo "Testing with file size of $bytes_to_transfer bytes"
+
+# run the receiver
+./receiver $port $out_file_name 0 &
+# ./receiver $port $out_file_name 0 &
+sleep 1
+# run the sender
+./sender $address $port $file_name $bytes_to_transfer
+
+chars_in_file=$(wc -c $out_file_name | awk '{print $1}')
+
+# check if number of bytes in output file is equal to the number of bytes sent
+if [ $chars_in_file -eq $bytes_to_transfer ]; then
+  echo "output file has correct number of bytes. Test passed"
+else
+  echo "output file has incorrect number of bytes = $chars_in_file. Test failed"
+fi
+
+
+

@@ -34,9 +34,9 @@
 
 #define ACK_TIMEOUT 150 // Timeout for ACKs in milliseconds.
 #define FIN_ACK_WAIT 100 // Time to wait for FIN ACKs in microseconds.
+#define MAX_FIN_SENT 10 // Maximum number of times to send FIN packets before giving up.
 
 #define min(a, b) ((b) > (a) ? (a) : (b)) // Helper function to find the minimum of two values.
-
 
 /**
  * Structure to keep track of each packet and its acknowledgment status.
@@ -117,23 +117,22 @@ void rsend(char* hostname,
   if (packets == NULL) {
     fprintf(stderr, "Cannot allocate memory for packet tracking\n");
     exit(EXIT_FAILURE);
-  }
+  } 
   memset(packets, 0, sizeof(packet_t) * ((bytes_to_transfer / PAYLOAD_SZ) + 1));
   long long int packet_index = 0;
 
   long long int total_bytes_read = 0;
 
   while(total_bytes_acked < bytes_to_transfer)   {
-    printf("total_bytes_acked: %d\n", total_bytes_acked);
 
     unsigned char buffer[PAYLOAD_SZ];
     memset(buffer, 0, PAYLOAD_SZ);
     if (total_bytes_read < bytes_to_transfer) {
+
+      // read the next chunk of data from the file
       size_t bytes_read_from_file = fread(buffer, sizeof(unsigned char), 
           min(PAYLOAD_SZ, bytes_to_transfer - total_bytes_read), input_file);
       total_bytes_read += bytes_read_from_file; 
-      // printf("total_bytes_read: %d\n", total_bytes_read);
-      // printf("bytes_read_from_file: %d\n", bytes_read_from_file);
 
     
       //create a packet with the data and header
@@ -152,7 +151,6 @@ void rsend(char* hostname,
         exit(EXIT_FAILURE);
       }
         
-      // printf("SENT packet with seq_num: %d\n", seq_num);
       seq_num++;
       packet_index++;
     }
@@ -160,9 +158,10 @@ void rsend(char* hostname,
 
     FD_ZERO(&readfds);
     FD_SET(sock_fd, &readfds);
-    tv.tv_sec = ACK_TIMEOUT / 2000;
-    tv.tv_usec = (ACK_TIMEOUT % 2000) * 1000;
+    tv.tv_sec = 0;
+    tv.tv_usec = ACK_TIMEOUT * 1000;
 
+    // monitor the socket for incoming packets 
     select_retval = select(sock_fd + 1, &readfds, NULL, NULL, &tv);
     
     if (select_retval == -1) {
@@ -176,19 +175,16 @@ void rsend(char* hostname,
       recvfrom(sock_fd, &ack_packet, sizeof(packet_t), 
           0, (const struct sockaddr*) &server_addr, &len);
 
-      // printf("RECEIVED ACK with ack_number: %d\n", ack_packet.header.ack_num);
       packets[ack_packet.header.ack_num].acked = true;
       total_bytes_acked += ack_packet.header.length;
  
     } else {
 
       // if the select call timed out, loop through all packets and retransmit any packets that have not been acked
-      // printf("TIMEOUT\n");
       for (unsigned long long int i = 0 ; i < packet_index; i++) {
         if (!packets[i].acked) {
           packet_t retransmit_packet = packets[i].packet;
           int send_len = sendto(sock_fd, &retransmit_packet, sizeof(packet_t), 0, (const struct sockaddr*) &server_addr,  len);
-          // printf("PACKET RETRANSMITTED with seq_num: %d\n", retransmit_packet.header.seq_num);
           if (send_len < 0) {
             fprintf(stderr, "Send failed: %d\n", send_len);
             exit(EXIT_FAILURE);
@@ -199,44 +195,29 @@ void rsend(char* hostname,
   
   }
 
-  // set socket timeout to ACK_TIMEOUT ms
-  struct timeval timeout;
-  timeout.tv_sec = 0;
-  timeout.tv_usec = ACK_TIMEOUT * 1000;
-    setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
 
   packet_t fin_packet, fin_ack_packet;
   bool fin_ack_flag = false;
 
-  while (!fin_ack_flag) {
+  int fin_sent = 0;
+  while (!fin_ack_flag && fin_sent < MAX_FIN_SENT) {
+
+    // send FIN packet
     fin_packet = create_packet(NULL, 
         create_header(0,0,-1, FIN_FLAG));
     sendto(sock_fd, &fin_packet, sizeof(packet_t), 0,
       (const struct sockaddr*) &server_addr,  len);
     printf("SENT FIN\n");
 
-    usleep(FIN_ACK_WAIT * 1000);
-
-    recvfrom(sock_fd, &fin_ack_packet, sizeof(packet_t), 
-        0, (const struct sockaddr*) &server_addr, &len);
-
-    if (errno == EAGAIN) {
-      printf("TIMEOUT\n");
-      break;
+    usleep(FIN_ACK_WAIT);
+    
+    // listen for FIN ACK
+    if (recvfrom(sock_fd, &fin_ack_packet, sizeof(packet_t), 
+        0, (const struct sockaddr*) &server_addr, &len) < 0) {
     }
 
-    if (IS_FIN(fin_ack_packet.header.flags) && IS_ACK(fin_ack_packet.header.flags)) {
-      fin_ack_flag = true;
-
-      // send fin ack
-      // printf("Received FIN\n");
-
-      fin_ack_packet = create_packet(NULL, 
-      create_header(0, 0, -1, FIN_FLAG | ACK_FLAG));
-      sendto(sock_fd, &fin_ack_packet, sizeof(packet_t), 0,
-        (const struct sockaddr*) &server_addr,  len);
-      printf("SENT FIN ACK\n");
-    }
+    fin_ack_flag = IS_FIN(fin_ack_packet.header.flags) && IS_ACK(fin_ack_packet.header.flags);
+    fin_sent++;
   }
 
   free(packets);
