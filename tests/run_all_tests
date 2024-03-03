@@ -1,0 +1,12 @@
+#!/bin/bash
+
+current_script="$(basename "$0")"
+
+for script in *; do
+    if [ -f "$script" ] && [ -x "$script" ] && [ "$script" != "$current_script" ]; then
+        echo "Running test: $script"
+        echo "---------------------------"
+        ./"$script"
+        echo
+    fi
+done

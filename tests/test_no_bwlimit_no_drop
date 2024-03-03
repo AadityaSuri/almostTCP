@@ -28,11 +28,18 @@ sleep 1
 
 chars_in_file=$(wc -c $out_file_name | awk '{print $1}')
 
-# check if number of bytes in output file is equal to the number of bytes sent
-if [ $chars_in_file -eq $bytes_to_transfer ]; then
-  echo "output file has correct number of bytes. Test passed"
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+file_size=$(wc -c <"$file_name")
+comparison_bytes=$(($bytes_to_transfer < $file_size ? $bytes_to_transfer : $file_size))
+
+# Use cmp to compare the first 'comparison_bytes' bytes of the files
+if cmp -n $comparison_bytes "$file_name" "$out_file_name"; then
+  echo -e "${GREEN}The first $comparison_bytes bytes of the files are identical. Test passed.${NC}"
 else
-  echo "output file has incorrect number of bytes = $chars_in_file. Test failed"
+  echo -e "${RED}The files differ within the first $comparison_bytes bytes. Test failed.${NC}"
 fi
 
 

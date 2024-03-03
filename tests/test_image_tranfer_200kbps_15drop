@@ -12,16 +12,15 @@ sudo tc qdisc add dev lo parent 1:12 netem loss 15%
 
 echo "Limited bandwidth to 200 kbytes/sec and 15% packet loss"
 
-MIN=2000
-MAX=10000
+MIN=200000
+MAX=2000000
 
 address="localhost"
 port=4040
-file_name="test_res/testfile.txt"
+file_name="test_res/download.jpeg"
 bytes_to_transfer=$(awk -v min=$MIN -v max=$MAX 'BEGIN{srand(); print int(min+rand()*(max-min+1))}')
 
-out_file_name="output.txt"
-recv_log="recv.log"
+out_file_name="output_image.jpeg"
 
 echo "Testing with file size of $bytes_to_transfer bytes"
 
@@ -31,6 +30,12 @@ echo "Testing with file size of $bytes_to_transfer bytes"
 sleep 1
 # run the sender
 ./sender $address $port $file_name $bytes_to_transfer
+
+chars_in_file=$(wc -c $out_file_name | awk '{print $1}')
+
+# Calculate file size and limit comparison bytes
+file_size=$(wc -c <"$file_name")
+comparison_bytes=$(($bytes_to_transfer < $file_size ? $bytes_to_transfer : $file_size))
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
